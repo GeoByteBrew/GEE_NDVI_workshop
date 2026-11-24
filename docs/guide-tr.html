@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>NDVI Atölyesi Rehberi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: tek sütun ders metni (~68ch), şekiller daha geniş; üstte bölüm çipleri. Renkler NDVI rampasından (toprak kahvesi → orman yeşili) türetildi. */
+:root {
+  --bg: #f3f6f1;
+  --surface: #ffffff;
+  --fg: #17221b;
+  --muted: #586a5d;
+  --line: #d5ded4;
+  --code-bg: #e9efe6;
+  --accent: #2c7a38;
+  --accent-soft: #dcebd9;
+  --soil: #9a6230;
+  --warn: #b5462f;
+  --c1: #a8743a; --c2: #d6bd5c; --c3: #7cbc58; --c4: #2e7d32;
+  --water: #3d7fb3;
+  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1511; --surface: #141e18; --fg: #e2eae3; --muted: #94a798; --line: #27352c;
+    --code-bg: #18241d; --accent: #74cf80; --accent-soft: #1d3324; --soil: #d39a5f; --warn: #ee7d65;
+    --c1: #c58a4a; --c2: #e0c96a; --c3: #8fd068; --c4: #3fa046; --water: #6aa8db;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1511; --surface: #141e18; --fg: #e2eae3; --muted: #94a798; --line: #27352c;
+  --code-bg: #18241d; --accent: #74cf80; --accent-soft: #1d3324; --soil: #d39a5f; --warn: #ee7d65;
+  --c1: #c58a4a; --c2: #e0c96a; --c3: #8fd068; --c4: #3fa046; --water: #6aa8db;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16.5px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 80px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.65rem; font-weight: 700; margin-bottom: 0.6rem; }
+h3 { font-size: 1.12rem; font-weight: 700; margin: 1.4rem 0 0.4rem; }
+p { margin: 0 0 0.9rem; }
+.lede { font-size: 1.12rem; color: var(--muted); margin-top: 0.8rem; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+pre { font-family: var(--font-mono); font-size: 0.84rem; line-height: 1.55; background: var(--code-bg); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0.6rem 0 1.2rem; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.cm { color: var(--muted); }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 1.6rem 0 0; }
+nav.toc a { font-size: 0.82rem; text-decoration: none; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; background: var(--surface); }
+nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+section { padding-top: 3rem; margin-top: 3rem; border-top: 1px solid var(--line); scroll-margin-top: 12px; }
+.step-no { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+
+figure { margin: 1.2rem 0 1.6rem; }
+figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+.fig { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; }
+.fig svg { display: block; width: 100%; height: auto; }
+.fig.wide svg { min-width: 560px; }
+
+.analogy { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 1rem 0 1.2rem; }
+.analogy strong { font-family: var(--font-display); }
+.fix { border-left: 3px solid var(--warn); padding: 8px 14px; margin: 1rem 0 1.2rem; background: var(--surface); border-radius: 0 8px 8px 0; font-size: 0.95rem; }
+.fix b { color: var(--warn); }
+
+/* SVG token classes */
+.t-fg { fill: var(--fg); } .t-muted { fill: var(--muted); } .t-accent { fill: var(--accent); }
+.t-warn { fill: var(--warn); } .t-soil { fill: var(--soil); } .t-water { fill: var(--water); }
+.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.box-acc { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+.ln { stroke: var(--line); fill: none; } .ln-fg { stroke: var(--muted); fill: none; }
+.ln-acc { stroke: var(--accent); fill: none; } .ln-warn { stroke: var(--warn); fill: none; }
+svg text { font-family: var(--font-body); }
+svg .mono { font-family: var(--font-mono); }
+svg a:focus-visible rect { stroke: var(--accent); stroke-width: 2.5; }
+
+/* widgets */
+.widget { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 1.2rem 0 1.6rem; }
+.widget h4 { margin: 0 0 0.6rem; font-family: var(--font-display); font-size: 1rem; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, .btn { font: inherit; font-size: 0.85rem; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 5px 11px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+input[type="number"] { font: inherit; font-family: var(--font-mono); width: 8.5em; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.sl { display: grid; grid-template-columns: 7.5em 1fr 4.5em; gap: 10px; align-items: center; margin: 8px 0; font-size: 0.92rem; }
+.sl output { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.big { font-family: var(--font-mono); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+.kv > div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 0; }
+.kv .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.ramp { position: relative; height: 16px; border-radius: 4px; margin: 26px 0 6px;
+  background: linear-gradient(90deg, var(--water) 0%, #8a8f86 45%, var(--c1) 50%, var(--c2) 62%, var(--c3) 78%, var(--c4) 100%); }
+.ramp .mk { position: absolute; top: -22px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 0.75rem; white-space: nowrap; }
+.ramp .mk::after { content: ""; position: absolute; left: 50%; top: 18px; width: 2px; height: 24px; background: var(--fg); transform: translateX(-1px); }
+.ramp .mk.raw { color: var(--warn); }
+.ramp .mk.raw::after { background: var(--warn); }
+.ramp-ax { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+.bits { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; margin: 12px 0 4px; }
+.bit { text-align: center; font-family: var(--font-mono); border: 1px solid var(--line); border-radius: 4px; padding: 4px 0; font-size: 0.95rem; }
+.bit.on { background: var(--code-bg); font-weight: 600; }
+.bit.key { border-color: var(--accent); border-width: 2px; }
+.bit.key.on { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+.bitidx { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+.verdict { font-weight: 600; margin-top: 10px; }
+.verdict.keep { color: var(--accent); } .verdict.drop { color: var(--warn); }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+tr.hit td { background: var(--accent-soft); font-weight: 600; }
+.tbl { overflow-x: auto; }
+
+ol.flow { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 8px; counter-reset: f; }
+ol.flow li { counter-increment: f; display: grid; grid-template-columns: 2rem 1fr; gap: 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+ol.flow li::before { content: counter(f); font-family: var(--font-mono); font-weight: 500; color: var(--accent); }
+ol.flow li > div { min-width: 0; }
+
+dl.gl { display: grid; grid-template-columns: minmax(8em, 12em) 1fr; gap: 8px 18px; }
+dl.gl dt { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; }
+dl.gl dd { margin: 0; color: var(--fg); }
+@media (max-width: 560px) {
+  dl.gl { grid-template-columns: 1fr; gap: 2px; } dl.gl dd { margin-bottom: 10px; }
+  .sl { grid-template-columns: 6em 1fr 4em; }
+  .bit { font-size: 0.75rem; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Women in GIS · Google Earth Engine · Sıfırdan</div>
+  <h1>Uydu görüntüsünden bitki sağlığı haritasına</h1>
+  <p class="lede prose">Bu scriptteki her işlemin ne olduğunu, neden yapıldığını ve kodda nerede durduğunu adım adım anlatan rehber. Etkileşimli kutularda değerleri değiştirip sonucu kendin görebilirsin.</p>
+  <nav class="toc" aria-label="Bölümler">
+    <a href="#buyuk-resim">Büyük resim</a><a href="#piksel">Piksel ve bant</a><a href="#geometri">Geometri</a>
+    <a href="#koleksiyon">Koleksiyon</a><a href="#map">map()</a><a href="#bulut">Bulut maskesi</a>
+    <a href="#ndvi">NDVI</a><a href="#olcek">Ölçek faktörü</a><a href="#kompozit">Kompozit</a>
+    <a href="#kmeans">K-Means</a><a href="#zaman">Grafikler</a><a href="#export">Export ve QGIS</a><a href="#sozluk">Sözlük</a>
+  </nav>
+</header>
+
+<!-- ========== BÜYÜK RESİM ========== -->
+<section id="buyuk-resim">
+  <h2>Büyük resim: ne yapıyoruz?</h2>
+  <div class="prose">
+    <p>Soru basit: <strong>ABD'nin kuzeydoğusundaki üç ormanlık ilçede bitki örtüsü ne kadar sağlıklı, ve 2014'ten 2025'e yaz aylarında nasıl değişti?</strong></p>
+    <p>Bunu cevaplamak için Landsat 8 uydusunun 12 yıllık görüntülerini alıyor, bulutları temizliyor, her piksel için bir "yeşillik puanı" (NDVI) hesaplıyor, sonra bu puanları haritaya, sınıflara ve grafiklere döküyoruz. Kodun tamamı bu sekiz adımdan oluşuyor:</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-pipeline" viewBox="0 0 800 250" role="img" aria-label="Sekiz adımlık iş akışı şeması"></svg></div>
+    <figcaption>Kutulara tıklayarak ilgili bölüme gidebilirsin. Üst sıra soldan sağa, alt sıra sağdan sola okunur.</figcaption>
+  </figure>
+  <div class="analogy prose"><strong>GEE nasıl çalışır?</strong> Yazdığın kod bir yemek tarifi gibidir. Tarifi Google'ın sunucularına gönderirsin; malzemeleri (petabaytlarca görüntü) onlar tutar ve pişirmeyi de onlar yapar. Üstelik sadece ekranda baktığın parçayı pişirirler. Bu yüzden 12 yıllık veriyle çalışmak birkaç saniye sürer, ama <code>Export</code> dediğinde tüm alan hesaplanır ve dakikalar alabilir.</div>
+</section>
+
+<!-- ========== PİKSEL VE BANT ========== -->
+<section id="piksel">
+  <div class="step-no">Temel kavram</div>
+  <h2>Uydu görüntüsü aslında bir sayı tablosu</h2>
+  <div class="prose">
+    <p>Telefon fotoğrafı gibi düşün: küçük karelerden (<strong>piksel</strong>) oluşur. Landsat'ta her piksel yerde <strong>30 × 30 metre</strong>lik bir alanı temsil eder, yani bir futbol sahası yaklaşık 8 piksel eder.</p>
+    <p>Fark şu: telefon her piksel için 3 renk ölçer (kırmızı, yeşil, mavi). Landsat ise gözümüzün göremediği ışık türlerini de ölçer. Her ışık türü ayrı bir katmandır ve buna <strong>bant</strong> denir. Bir görüntü, üst üste konmuş bant katmanlarından oluşan bir yığındır.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-bands" viewBox="0 0 760 300" role="img" aria-label="Üst üste dört bant katmanı ve tek pikselin değerleri"></svg></div>
+    <figcaption>Aynı konumdaki piksel her katmanda farklı bir değer taşır. Bu değerler, o yüzeyin ilgili ışığın yüzde kaçını geri yansıttığını gösterir (0 = hiç, 1 = tamamı).</figcaption>
+  </figure>
+  <div class="prose">
+    <p>Atölyede kullandığımız bantlar:</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Bant adı (kodda)</th><th>Işık türü</th><th>Dalga boyu</th><th>Ne için</th></tr></thead>
+    <tbody>
+      <tr><td><code>SR_B2</code></td><td>Mavi</td><td class="num">0,45–0,51 µm</td><td>Gerçek renkli görüntü</td></tr>
+      <tr><td><code>SR_B3</code></td><td>Yeşil</td><td class="num">0,53–0,59 µm</td><td>Gerçek renkli görüntü</td></tr>
+      <tr><td><code>SR_B4</code></td><td>Kırmızı</td><td class="num">0,64–0,67 µm</td><td>Gerçek renk + NDVI</td></tr>
+      <tr><td><code>SR_B5</code></td><td>Yakın kızılötesi (NIR)</td><td class="num">0,85–0,88 µm</td><td>NDVI</td></tr>
+      <tr><td><code>QA_PIXEL</code></td><td>Işık değil, kalite notu</td><td class="num">—</td><td>Bulut maskesi</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose" style="margin-top:1rem"><code>SR</code> "Surface Reflectance" yani yüzey yansıması demek. Atmosferin etkisi temizlenmiş, yeryüzünün gerçek yansımasına yakın değerler.</p>
+</section>
+
+<!-- ========== GEOMETRİ ========== -->
+<section id="geometri">
+  <div class="step-no">Adım 1 · kod bölüm 1</div>
+  <h2>Geometri: "nereye bakıyoruz?"</h2>
+  <div class="prose">
+    <p>Dünyanın tamamını işlemek istemeyiz. Önce ilgilendiğimiz yeri tanımlarız. GEE'de üç tür yer tanımı kullandık:</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-geom" viewBox="0 0 760 230" role="img" aria-label="Nokta, poligon ve feature collection örnekleri"></svg></div>
+  </figure>
+  <pre><code><span class="cm">// Nokta: [boylam, enlem] — dikkat, önce boylam (x), sonra enlem (y)</span>
+var pt1 = ee.Geometry.Point([-70.7029, 45.3211]);
+
+<span class="cm">// Poligon: köşelerin listesi</span>
+var region = ee.Geometry.Polygon([[
+  [-70.7029, 45.3211], [-70.7029, 45.1511],
+  [-70.4118, 45.1511], [-70.4118, 45.3211]
+]]);</code></pre>
+  <h3>FeatureCollection: özellik tablosu olan şekiller</h3>
+  <div class="prose">
+    <p><code>TIGER/2018/Counties</code> ABD'deki tüm ilçelerin sınırlarını içeren hazır bir veri seti. Her ilçe bir <strong>Feature</strong>'dır: bir şekil + bir bilgi satırı (adı, eyalet kodu…). Hepsinin toplamı bir <strong>FeatureCollection</strong>, yani QGIS'teki bir vektör katmanının GEE karşılığı.</p>
+    <p>Neden iki filtre birden kullanıyoruz? Çünkü aynı isimde birçok ilçe var:</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>NAME</th><th>STATEFP</th><th>Eyalet</th><th>İki filtreden geçer mi?</th></tr></thead>
+    <tbody>
+      <tr><td>Essex</td><td class="num">25</td><td>Massachusetts</td><td>Hayır</td></tr>
+      <tr><td>Essex</td><td class="num">34</td><td>New Jersey</td><td>Hayır</td></tr>
+      <tr><td>Essex</td><td class="num">36</td><td>New York</td><td>Hayır</td></tr>
+      <tr class="hit"><td>Essex</td><td class="num">50</td><td>Vermont</td><td>Evet</td></tr>
+      <tr><td>Essex</td><td class="num">51</td><td>Virginia</td><td>Hayır</td></tr>
+    </tbody>
+  </table></div>
+  <pre><code><span class="cm">// "Adı Essex OLAN ve eyalet kodu 50 OLAN" ilçeleri tut</span>
+var vt = counties.filter(ee.Filter.and(
+  ee.Filter.eq('STATEFP', '50'), ee.Filter.eq('NAME', 'Essex')));
+
+<span class="cm">// Üç ilçeyi tek koleksiyonda birleştir</span>
+var forests = vt.merge(nh).merge(me);</code></pre>
+  <p class="prose"><code>STATEFP</code> metin olarak saklandığı için <code>'50'</code> tırnak içinde yazılıyor. <code>50</code> (sayı) yazsaydık hiçbir şey eşleşmezdi.</p>
+</section>
+
+<!-- ========== KOLEKSİYON ========== -->
+<section id="koleksiyon">
+  <div class="step-no">Adım 2 · kod bölüm 2</div>
+  <h2>ImageCollection: zaman içinde çekilmiş görüntü yığını</h2>
+  <div class="prose">
+    <p>Landsat 8, 2013'ten beri dünyanın her noktasının üzerinden <strong>16 günde bir</strong> geçip fotoğraf çekiyor. Her geçiş, belirli bir şeridi kapsayan tek bir görüntü (yaklaşık 185 × 180 km'lik bir "sahne") üretir. Bunların tamamı <code>LANDSAT/LC08/C02/T1_L2</code> adlı koleksiyonda duruyor: dünya çapında yüz binlerce görüntü.</p>
+    <p>İki filtreyle bunu işimize yarayan küçük bir yığına indiriyoruz:</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-coll" viewBox="0 0 760 300" role="img" aria-label="Zaman filtresi ve alan filtresi şeması"></svg></div>
+    <figcaption>Solda <code>filterDate</code> zaman ekseninde bir pencere seçer. Sağda <code>filterBounds</code>, ilçelere dokunan sahneleri tutar ve ötekileri atar.</figcaption>
+  </figure>
+  <pre><code>var landsat = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+  .filterDate('2014-01-01', '2026-01-01')  <span class="cm">// bitiş günü dahil değil → 2025 sonuna kadar</span>
+  .filterBounds(forests)                   <span class="cm">// sadece ilçelerimize dokunan sahneler</span>
+  .map(prepL8);                            <span class="cm">// her birine hazırlık fonksiyonunu uygula</span>
+
+print('Kullanılan Landsat görüntüsü sayısı', landsat.size());</code></pre>
+  <div class="fix prose"><b>Bu sürümde:</b> bitiş tarihi <code>'2026-01-01'</code> — böylece 2025'in tamamı dahil (GEE bitiş tarihini hariç tutar). Kompozit, mekânsal olarak filtrelenmiş koleksiyondan alınır; dünya çapında filtresiz yığından değil.</div>
+</section>
+
+<!-- ========== MAP ========== -->
+<section id="map">
+  <div class="step-no">Kavram</div>
+  <h2><code>.map()</code>: aynı işlemi her görüntüye uygulamak</h2>
+  <div class="prose">
+    <p>Yığında yüzlerce görüntü var ve her birine aynı şeyi yapmak istiyoruz: bulutları sil, değerleri ölçekle, NDVI hesapla. Bunun için işlemi bir kez <strong>fonksiyon</strong> olarak yazıyor, sonra <code>.map()</code> ile yığındaki her görüntüye uyguluyoruz.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-map" viewBox="0 0 760 200" role="img" aria-label="map fonksiyonunun her görüntüye uygulanması"></svg></div>
+  </figure>
+  <div class="analogy prose"><strong>Benzetme:</strong> Fotoğraf albümündeki her fotoğrafa aynı filtreyi uygulayan bir Instagram makrosu. Fonksiyon tek bir fotoğrafla ne yapılacağını tarif eder; <code>.map()</code> bu tarifi albümün tamamına uygular. Girdi 400 görüntüyse çıktı da 400 görüntüdür.</div>
+</section>
+
+<!-- ========== BULUT ========== -->
+<section id="bulut">
+  <div class="step-no">Adım 3 · fonksiyon <code>prepL8</code></div>
+  <h2>Bulut maskesi: QA_PIXEL bandını okumak</h2>
+  <div class="prose">
+    <p>Bulut, altındaki ormanı gizler. Bulutlu bir pikselin NDVI'si ormanı değil bulutu ölçer, bu yüzden bu pikselleri atmamız gerekir.</p>
+    <p>Landsat her piksel için bir <strong>kalite notu</strong> verir: <code>QA_PIXEL</code> bandı. Bu not tek bir sayıdır, ama aslında 16 tane evet/hayır cevabının sıkıştırılmış hâlidir. Sayıyı ikilik (binary) sisteme çevirince her basamak (<strong>bit</strong>) bir soruya cevap verir:</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Bit</th><th>Soru</th><th>Bit</th><th>Soru</th></tr></thead>
+    <tbody>
+      <tr><td class="num">0</td><td>Boş (veri yok) mu?</td><td class="num">5</td><td>Kar mı?</td></tr>
+      <tr><td class="num">1</td><td>Bulut kenarı mı?</td><td class="num">6</td><td>Temiz mi?</td></tr>
+      <tr><td class="num">2</td><td>İnce bulut (cirrus) mu?</td><td class="num">7</td><td>Su mu?</td></tr>
+      <tr class="hit"><td class="num">3</td><td>Bulut mu?</td><td class="num">8–15</td><td>Güven seviyeleri (ikişer bit)</td></tr>
+      <tr class="hit"><td class="num">4</td><td>Bulut gölgesi mi?</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="widget" id="w-qa">
+    <h4>Dene: bir QA_PIXEL değerini çöz</h4>
+    <div class="row">
+      <label for="qa-in">Değer</label>
+      <input type="number" id="qa-in" min="0" max="65535" value="22280">
+      <button type="button" data-qa="21824">Temiz kara</button>
+      <button type="button" data-qa="21952">Temiz su</button>
+      <button type="button" data-qa="22280">Bulut</button>
+      <button type="button" data-qa="23824">Bulut gölgesi</button>
+    </div>
+    <div class="bits" id="qa-bits" aria-live="polite"></div>
+    <div class="bitidx" id="qa-idx"></div>
+    <div class="kv">
+      <div><div class="lbl">Bulut testi · değer AND 8</div><div class="big" id="qa-c">0</div></div>
+      <div><div class="lbl">Gölge testi · değer AND 16</div><div class="big" id="qa-s">0</div></div>
+    </div>
+    <div class="verdict" id="qa-v"></div>
+  </div>
+
+  <div class="prose">
+    <p><code>1 &lt;&lt; 3</code> "1'i üç basamak sola kaydır" demektir: ikilikte <code>1000</code>, yani 8. <code>1 &lt;&lt; 4</code> = 16. <code>bitwiseAnd(8)</code> sayının sadece 3. bitine bakar: sonuç 0 ise o bit kapalıdır, piksel bulut değildir.</p>
+  </div>
+  <pre><code>function prepL8(image) {
+  var qa = image.select('QA_PIXEL');
+  var mask = qa.bitwiseAnd(1 &lt;&lt; 3).eq(0)       <span class="cm">// bulut bit'i kapalı VE</span>
+    .and(qa.bitwiseAnd(1 &lt;&lt; 4).eq(0));          <span class="cm">// gölge bit'i kapalı → 1 (tut), değilse 0</span>
+  var sr = image.select('SR_B.').multiply(0.0000275).add(-0.2);  <span class="cm">// ölçek (aşağıda)</span>
+  return image.addBands(sr, null, true).updateMask(mask);
+}</code></pre>
+  <p class="prose"><code>updateMask</code> maskesi 0 olan pikselleri "yok" sayar. Silinmezler ama sonraki hiçbir hesaba katılmazlar; haritada şeffaf görünürler.</p>
+</section>
+
+<!-- ========== NDVI ========== -->
+<section id="ndvi">
+  <div class="step-no">Adım 5 · kod bölüm 3</div>
+  <h2>NDVI: bitkinin "sağlık puanı"</h2>
+  <div class="prose">
+    <p>Sağlıklı yaprak iki şeyi aynı anda yapar:</p>
+    <p><strong>Kırmızı ışığı yutar.</strong> Klorofil fotosentez için kırmızı ışığı kullanır, bu yüzden yaprak kırmızıyı çok az yansıtır.<br>
+    <strong>Yakın kızılötesini (NIR) güçlü yansıtır.</strong> Yaprağın iç hücre yapısı NIR'ı ayna gibi geri sektirir. Biz göremeyiz ama uydu görür.</p>
+    <p>Toprak ve su bu ikiliyi yapmaz. Aradaki fark ne kadar büyükse bitki o kadar yoğun ve sağlıklıdır.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-spec" viewBox="0 0 760 330" role="img" aria-label="Bitki, toprak ve su için yansıma eğrileri"></svg></div>
+    <figcaption>Tipik (şematik) yansıma eğrileri. Bitki eğrisinin kırmızı bantta dipte, NIR bandında tepede olduğuna dikkat et. Bu sıçramaya "kırmızı kenar" (red edge) denir.</figcaption>
+  </figure>
+  <div class="prose">
+    <p>NDVI bu farkı tek bir sayıya çevirir:</p>
+    <pre><code>NDVI = (NIR − Kırmızı) / (NIR + Kırmızı)</code></pre>
+    <p>Bölmenin amacı: aydınlık ve gölgeli yamaçlarda aynı orman farklı parlaklıkta görünür, ama oran aynı kalır. Sonuç her zaman −1 ile +1 arasındadır.</p>
+  </div>
+
+  <div class="widget" id="w-ndvi">
+    <h4>Dene: yansıma değerlerini değiştir, NDVI'yi izle</h4>
+    <div class="row" id="ndvi-presets"></div>
+    <div class="sl"><label for="r-red">Kırmızı (B4)</label><input type="range" id="r-red" min="0" max="0.6" step="0.01" value="0.04"><output id="o-red">0.04</output></div>
+    <div class="sl"><label for="r-nir">NIR (B5)</label><input type="range" id="r-nir" min="0" max="0.6" step="0.01" value="0.45"><output id="o-nir">0.45</output></div>
+    <div class="kv">
+      <div><div class="lbl">Hesap</div><div class="mono" id="ndvi-calc" style="font-family:var(--font-mono);font-size:0.92rem"></div></div>
+      <div><div class="lbl">NDVI</div><div class="big" id="ndvi-val"></div></div>
+      <div><div class="lbl">Yorum</div><div id="ndvi-txt" style="font-weight:600"></div></div>
+    </div>
+    <div class="ramp" id="ndvi-ramp"><span class="mk" id="ndvi-mk">NDVI</span></div>
+    <div class="ramp-ax"><span>−1 su</span><span>0 toprak, kaya, bulut</span><span>+1 yoğun orman</span></div>
+  </div>
+  <pre><code>function addNDVI(image) {
+  <span class="cm">// normalizedDifference(['A','B']) = (A − B) / (A + B)</span>
+  var nd = image.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI');
+  return image.addBands(nd).select('NDVI');
+}
+var ndvi = landsat.map(addNDVI);   <span class="cm">// yığındaki her görüntü için bir NDVI görüntüsü</span></code></pre>
+  <p class="prose"><code>normalizedDifference</code>, <code>nir.subtract(red).divide(nir.add(red))</code> satırının hazır ve kısa hâli. Sonuç aynı.</p>
+</section>
+
+<!-- ========== ÖLÇEK ========== -->
+<section id="olcek">
+  <div class="step-no">Adım 4 · en önemli metodolojik nokta</div>
+  <h2>Ölçek faktörü: ham sayıyı gerçek yansımaya çevirmek</h2>
+  <div class="prose">
+    <p>Yukarıda 0,04 veya 0,45 gibi yansıma değerleri kullandık. Ama Landsat dosyalarında bu değerler böyle saklanmaz. Yer tasarrufu için tam sayıya çevrilirler: 0,45 yerine dosyada <strong>23 636</strong> yazar. Buna <strong>DN</strong> (Digital Number, ham sayı) denir.</p>
+    <p>Geri çevirmek için USGS'nin verdiği formül:</p>
+    <pre><code>yansıma = DN × 0,0000275 − 0,2</code></pre>
+    <p>Ölçeklemeden NDVI hesaplanırsa değerler yanılır. "Bölme işlemi olduğu için fark etmez" diye düşünülebilir, ama formüldeki <strong>−0,2 kayması</strong> oranı bozar. Ham sayılarla hesaplanan değer aslında şuna eşittir:</p>
+    <pre><code>ölçeksiz NDVI = (NIR − Kırmızı) / (NIR + Kırmızı + 0,4)</code></pre>
+    <p>Paydaya fazladan 0,4 eklendiği için tüm NDVI değerleri olduğundan küçük çıkar ve birbirine yaklaşır. Yukarıdaki kutuda değer değiştirdikçe aşağıdaki karşılaştırma da güncellenir:</p>
+  </div>
+  <div class="widget" id="w-scale">
+    <h4>Aynı piksel, iki hesap</h4>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th>Kırmızı</th><th>NIR</th><th>NDVI</th></tr></thead>
+      <tbody>
+        <tr><td>Dosyadaki ham sayı (DN)</td><td class="num" id="dn-r"></td><td class="num" id="dn-n"></td><td class="num t-warn" id="dn-ndvi" style="color:var(--warn)"></td></tr>
+        <tr><td>Ölçeklenmiş yansıma</td><td class="num" id="sr-r"></td><td class="num" id="sr-n"></td><td class="num" id="sr-ndvi" style="color:var(--accent);font-weight:600"></td></tr>
+      </tbody>
+    </table></div>
+    <div class="ramp"><span class="mk raw" id="sc-raw">ham</span><span class="mk" id="sc-ok">ölçekli</span></div>
+    <div class="ramp-ax"><span>−1</span><span>0</span><span>+1</span></div>
+  </div>
+  <div class="fix prose"><b>Sonuç:</b> Sağlıklı bir orman pikseli ölçeklendikten sonra 0,84 çıkarken ham sayılarla yaklaşık 0,46 çıkar ve "seyrek bitki" gibi görünür. Bu scriptte <code>prepL8</code> fonksiyonu bu çevirmeyi her görüntüye uyguluyor. Görselleştirmedeki <code>min: 7464, max: 12575</code> değerleri de bu yüzden <code>min: 0, max: 0.3</code> oldu.</div>
+</section>
+
+<!-- ========== KOMPOZİT ========== -->
+<section id="kompozit">
+  <div class="step-no">Adım 6</div>
+  <h2>Kompozit: 400 görüntüyü tek görüntüye indirmek</h2>
+  <div class="prose">
+    <p>Haritada tek bir resim göstermek ya da bir alanı kırpmak (<code>clip</code>) için tek görüntüye ihtiyacımız var. Bunu her piksel için zaman içindeki değerlerini <strong>tek bir değere özetleyerek</strong> yaparız. Buna kompozit denir.</p>
+    <p>Bir pikseli 9 farklı tarihte ölçtüğümüzü düşün. Maske çoğu bulutu sildi ama iki tarihte bulut kenarı ya da sis kaçmış olsun:</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-comp" viewBox="0 0 760 300" role="img" aria-label="Bir pikselin dokuz tarihteki NDVI değerleri, ortalama ve ortanca çizgileri"></svg></div>
+    <figcaption>Örnek değerler. Ortalama, iki kötü ölçüm yüzünden aşağı çekilir. Ortanca (median) ise sıralamanın ortasındaki değeri alır ve uç değerlerden etkilenmez.</figcaption>
+  </figure>
+  <pre><code>var image1 = landsat.median().clip(region);   <span class="cm">// mean yerine median: uç değerlere daha dayanıklı</span></code></pre>
+  <p class="prose">Bu yüzden bu scriptte <code>mean()</code> yerine <code>median()</code> kullanıyoruz. NDVI koleksiyonunu sınıflandırmaya sokmadan önce de aynı şeyi yapıyoruz: <code>var input = ndvi.median();</code></p>
+</section>
+
+<!-- ========== K-MEANS ========== -->
+<section id="kmeans">
+  <div class="step-no">Adım 7a · kod bölüm 4</div>
+  <h2>K-Means: pikselleri benzerliğe göre gruplamak</h2>
+  <div class="prose">
+    <p>Elimizde her pikselin bir NDVI değeri var. Bunları "çok yeşil", "orta", "az" gibi gruplara ayırmak istiyoruz, ama sınırları kendimiz belirlemek istemiyoruz. K-Means bunu veriden öğrenir. Bu yönteme <strong>gözetimsiz (unsupervised)</strong> sınıflandırma denir, çünkü bilgisayara "şu piksel ormandır" diye örnek göstermiyoruz.</p>
+    <p>Algoritma çok basit, iki adımı tekrarlıyor:</p>
+    <p><strong>1. Ata:</strong> Her piksel kendine en yakın merkeze katılır.<br>
+    <strong>2. Güncelle:</strong> Her merkez, kendi grubunun ortalamasına taşınır.<br>
+    Merkezler artık yer değiştirmeyince durur.</p>
+  </div>
+  <div class="widget" id="w-km">
+    <h4>Dene: 80 piksel, 4 küme (kodda 6 küme ve 5000 piksel var)</h4>
+    <div class="row">
+      <button type="button" id="km-step">1 adım ilerle</button>
+      <button type="button" id="km-run">Sonuna kadar</button>
+      <button type="button" id="km-reset">Yeni rastgele başlangıç</button>
+      <button type="button" id="km-sort" aria-pressed="false">Numaraları NDVI'ye göre sırala</button>
+    </div>
+    <div class="fig" style="margin-top:12px;padding:6px;overflow-x:auto"><svg id="svg-km" viewBox="0 0 720 230" style="min-width:520px" role="img" aria-label="K-Means kümeleme görselleştirmesi"></svg></div>
+    <div id="km-status" style="font-size:0.9rem;color:var(--muted);margin-top:6px" aria-live="polite"></div>
+  </div>
+  <div class="prose">
+    <p><strong>Önemli tuzak:</strong> K-Means kümelere rastgele numara verir. "Küme 0" en düşük NDVI demek değildir; her çalıştırmada farklı bir grup 0 olabilir. Yukarıdaki kutuda "Yeni rastgele başlangıç"a birkaç kez basıp renklerin sırasının nasıl karıştığına bak. Açık yeşilden koyu yeşile giden bir paleti bu rastgele numaralara bağlamak haritayı okumayı zorlaştırır.</p>
+    <p>Bu scriptte her kümenin ortalama NDVI'sini hesaplayıp küçükten büyüğe sıralıyor, sonra numaraları yeniden veriyoruz (<code>remap</code>). Artık 0 gerçekten en düşük, 5 en yüksek NDVI.</p>
+  </div>
+  <pre><code>var training  = input.sample({region: forests.geometry(), scale: 30, numPixels: 5000, seed: 42});
+var clusterer = ee.Clusterer.wekaKMeans(6).train(training);   <span class="cm">// 5000 örnekten öğren</span>
+var clustered = input.cluster(clusterer);                     <span class="cm">// tüm piksellere uygula</span>
+<span class="cm">// ... her kümenin ortalama NDVI'si → sırala → remap</span>
+var ranked = clustered.remap(order, ee.List.sequence(0, 5));</code></pre>
+  <p class="prose"><code>seed: 42</code> rastgele seçimi sabitler: kodu her çalıştırdığında aynı 5000 piksel seçilir ve sonuç değişmez.</p>
+</section>
+
+<!-- ========== ZAMAN ========== -->
+<section id="zaman">
+  <div class="step-no">Adım 7b · kod bölüm 5</div>
+  <h2>Grafikler: yaz aylarında NDVI nasıl değişti?</h2>
+  <div class="prose">
+    <p>Grafik için her ay tek bir değer istiyoruz. Bunun için iki iç içe döngü kuruyoruz: 12 yıl × 3 yaz ayı (haziran, temmuz, ağustos) = <strong>36 kutu</strong>. Her kutuya o ay çekilmiş temiz görüntülerin ortalamasını koyuyoruz.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-grid" viewBox="0 0 760 210" role="img" aria-label="12 yıl ve 3 ay için 36 kutuluk ızgara"></svg></div>
+    <figcaption>Temsili gösterim. Bulutlu bir yazda bir ayın hiç temiz görüntüsü olmayabilir. Bu script boş ayları <code>n_images &gt; 0</code> filtresiyle atıyor. Hangi ayların boş kalacağı gerçek veriye bağlı.</figcaption>
+  </figure>
+  <h3>Reducer: bir alandaki binlerce pikseli tek sayıya indirmek</h3>
+  <div class="prose">
+    <p>Her aylık görüntüde bölgemiz binlerce pikselden oluşuyor. Grafikteki tek bir nokta için bunları özetlememiz gerekiyor. Bu işi yapan araca <strong>reducer</strong> denir:</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-red" viewBox="0 0 760 230" role="img" aria-label="16 piksellik alanın ortalama ve maksimum ile özetlenmesi"></svg></div>
+    <figcaption>Aynı 16 piksel, iki farklı reducer. Başlık "Average" iken <code>max()</code> kullanmak tutarsız olur: max yalnızca en yeşil pikseli gösterir, bölgenin genel durumunu temsil etmez. Bu script <code>mean()</code> kullanır.</figcaption>
+  </figure>
+  <pre><code>ui.Chart.image.series({
+  imageCollection: summerNDVI,   <span class="cm">// 36 (veya daha az) aylık görüntü</span>
+  region: region,
+  reducer: ee.Reducer.mean(),    <span class="cm">// her ay için bölge ortalaması</span>
+  scale: 100,                    <span class="cm">// hesap çözünürlüğü (m); büyüdükçe hızlanır, kabalaşır</span>
+  xProperty: 'system:time_start' <span class="cm">// x ekseni = tarih</span>
+});</code></pre>
+  <p class="prose"><code>seriesByRegion</code> aynı işi üç ilçe için ayrı ayrı yapar ve her ilçeyi ayrı bir çizgiyle çizer. <code>seriesProperty: 'NAME'</code> çizgilerin adını ilçe adından alır.</p>
+  <h3>Lejant</h3>
+  <p class="prose">Lejant kodu tamamen arayüz işi: bir panel açıyor, her renk için bir renkli kutu + etiket satırı ekliyor. Tek bir <code>makeLegend(başlık, renkler, adlar)</code> fonksiyonu iki lejantı da üretiyor.</p>
+</section>
+
+<!-- ========== EXPORT ========== -->
+<section id="export">
+  <div class="step-no">Adım 8 · kod bölüm 7</div>
+  <h2>Export ve QGIS: sonucu bilgisayara almak</h2>
+  <div class="prose">
+    <p>GEE'de gördüğün her şey sunucuda yaşar. Bir dosya olarak almak için <code>Export</code> kullanırız. Export bir "görev" oluşturur ama kendiliğinden başlamaz:</p>
+  </div>
+  <ol class="flow">
+    <li><div><strong>Kodu çalıştır.</strong> Sağdaki <em>Tasks</em> sekmesinde turuncu görevler belirir.</div></li>
+    <li><div><strong>Her görevde Run'a bas.</strong> Hesap şimdi tüm alan için yapılır; birkaç dakika sürebilir.</div></li>
+    <li><div><strong>Google Drive → <code>ee_Workshop</code> klasörü.</strong> NDVI ve sınıflar GeoTIFF, ilçeler Shapefile olarak gelir.</div></li>
+    <li><div><strong>QGIS'e yükle.</strong> Layer → Add Layer → Add Raster Layer / Add Vector Layer.</div></li>
+    <li><div><strong>Kırp.</strong> Processing Toolbox → <em>Clip raster by mask layer</em>, maske olarak <code>forests</code>.</div></li>
+    <li><div><strong>Renklendir.</strong> Katmana sağ tık → <em>Properties</em> → Symbology → Singleband pseudocolor, yeşil renk rampası.</div></li>
+  </ol>
+  <div class="fix prose"><b>Export ipuçları:</b> (1) Tek bir görüntü gönderin — bu script koleksiyon yerine <code>input</code> (median NDVI) aktarır. (2) QGIS'te semboloji için <em>Properties</em> kullanın ("Processing" değil). (3) Kırpmada NoData olarak 0 kullanmayın — 0 geçerli bir NDVI; örneğin −9999 tercih edin.</div>
+</section>
+
+<!-- ========== SÖZLÜK ========== -->
+<section id="sozluk">
+  <h2>Kısa sözlük</h2>
+  <dl class="gl">
+    <dt>Piksel</dt><dd>Görüntünün en küçük karesi. Landsat'ta 30 × 30 m.</dd>
+    <dt>Bant</dt><dd>Belirli bir ışık türünü ölçen katman (kırmızı, NIR…).</dd>
+    <dt>Yansıma</dt><dd>Yüzeyin gelen ışığın ne kadarını geri yolladığı (0–1).</dd>
+    <dt>DN</dt><dd>Dosyada saklanan ham tam sayı; ölçek faktörüyle yansımaya çevrilir.</dd>
+    <dt>Image</dt><dd>Tek bir görüntü (birden çok bant içerebilir).</dd>
+    <dt>ImageCollection</dt><dd>Görüntü yığını, çoğunlukla aynı yerin farklı tarihleri.</dd>
+    <dt>Feature / FeatureCollection</dt><dd>Şekil + öznitelik satırı / bunların tablosu (vektör katman).</dd>
+    <dt>filterDate, filterBounds</dt><dd>Yığını tarihe ve konuma göre süzer.</dd>
+    <dt>map()</dt><dd>Bir fonksiyonu yığındaki her elemana uygular.</dd>
+    <dt>Maske</dt><dd>Hangi piksellerin hesaba katılacağını söyleyen 1/0 katmanı.</dd>
+    <dt>Bit</dt><dd>İkilik sayının tek basamağı; QA_PIXEL'de her bit bir evet/hayır cevabı.</dd>
+    <dt>NDVI</dt><dd>(NIR − Kırmızı) / (NIR + Kırmızı); −1 ile +1 arası bitki örtüsü göstergesi.</dd>
+    <dt>Kompozit</dt><dd>Zaman içindeki değerleri piksel piksel özetleyen tek görüntü.</dd>
+    <dt>Reducer</dt><dd>Çok değeri tek değere indiren işlem: mean, median, max…</dd>
+    <dt>K-Means</dt><dd>Pikselleri benzerliğe göre k gruba ayıran gözetimsiz yöntem.</dd>
+    <dt>scale</dt><dd>Hesabın yapıldığı piksel boyutu (metre).</dd>
+    <dt>Export</dt><dd>Sonucu Drive'a dosya olarak yazan görev.</dd>
+  </dl>
+</section>
+<footer class="prose" style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--line);font-size:0.85rem;color:var(--muted)">
+  Women in GIS « Intro to Google Earth Engine – Utilizing GEE to Analyze NDVI » atölyesine (Ekim 2026) dayanır. Script geliştirmeleri, rehber ve belgeleme: Irem Cagbayir. Veri: USGS Landsat 8 Collection 2 Level-2, US Census Bureau TIGER/Line 2018.
+</footer>
+</div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function $(id) { return document.getElementById(id); }
+  function fmt(x, d) { return (x < 0 ? "−" : "") + Math.abs(x).toFixed(d === undefined ? 2 : d); }
+  function arrow(svg, x1, y1, x2, y2, cls) {
+    el("line", {x1: x1, y1: y1, x2: x2, y2: y2, "class": cls || "ln-fg", "stroke-width": 1.6}, svg);
+    var a = Math.atan2(y2 - y1, x2 - x1), s = 7;
+    el("path", {d: "M" + x2 + "," + y2 + " L" + (x2 - s * Math.cos(a - 0.45)) + "," + (y2 - s * Math.sin(a - 0.45)) +
+      " L" + (x2 - s * Math.cos(a + 0.45)) + "," + (y2 - s * Math.sin(a + 0.45)) + " Z", "class": cls === "ln-acc" ? "t-accent" : "t-muted"}, svg);
+  }
+
+  /* ---------- Pipeline ---------- */
+  (function () {
+    var s = $("svg-pipeline");
+    var steps = [
+      ["Geometri", "ee.Geometry · TIGER", "geometri"],
+      ["Koleksiyon + filtre", "filterDate · filterBounds", "koleksiyon"],
+      ["Bulut maskesi", "QA_PIXEL bit 3 ve 4", "bulut"],
+      ["Ölçek faktörü", "× 0.0000275 − 0.2", "olcek"],
+      ["NDVI", "normalizedDifference", "ndvi"],
+      ["Kompozit", "median()", "kompozit"],
+      ["Sınıflar + grafik", "wekaKMeans · ui.Chart", "kmeans"],
+      ["Export → QGIS", "Export.image.toDrive", "export"]
+    ];
+    var xs = [20, 220, 420, 620, 620, 420, 220, 20];
+    steps.forEach(function (st, i) {
+      var y = i < 4 ? 30 : 150;
+      var a = el("a", {href: "#" + st[2]}, s);
+      el("rect", {x: xs[i], y: y, width: 160, height: 70, rx: 8, "class": i === 3 || i === 4 ? "box-acc" : "box"}, a);
+      el("text", {x: xs[i] + 12, y: y + 22, "class": "t-accent mono", "font-size": 11}, a, String(i + 1));
+      el("text", {x: xs[i] + 28, y: y + 22, "class": "t-fg", "font-size": 13.5, "font-weight": 600}, a, st[0]);
+      el("text", {x: xs[i] + 12, y: y + 48, "class": "t-muted mono", "font-size": 10.5}, a, st[1]);
+    });
+    arrow(s, 182, 65, 216, 65); arrow(s, 382, 65, 416, 65); arrow(s, 582, 65, 616, 65);
+    arrow(s, 700, 102, 700, 146);
+    arrow(s, 618, 185, 584, 185); arrow(s, 418, 185, 384, 185); arrow(s, 218, 185, 184, 185);
+  })();
+
+  /* ---------- Bands ---------- */
+  (function () {
+    var s = $("svg-bands");
+    var layers = [["SR_B2 · Mavi", 0.04], ["SR_B3 · Yeşil", 0.07], ["SR_B4 · Kırmızı", 0.05], ["SR_B5 · NIR", 0.45]];
+    var cell = 22, n = 5, ox = 60, oy = 160;
+    var seed = 7; function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    for (var L = 0; L < layers.length; L++) {
+      var x0 = ox + L * 30, y0 = oy - L * 26;
+      var g = el("g", {}, s);
+      for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) {
+        var hit = r === 2 && c === 2;
+        var base = L === 3 ? 0.55 : 0.18;
+        el("rect", {x: x0 + c * cell, y: y0 + r * cell, width: cell, height: cell,
+          "class": hit ? "box-acc" : "", fill: hit ? "" : "var(--accent)",
+          "fill-opacity": hit ? 1 : (base + rnd() * 0.35).toFixed(2), stroke: "var(--surface)", "stroke-width": 1}, g);
+      }
+      el("rect", {x: x0, y: y0, width: n * cell, height: n * cell, fill: "none", "class": "ln-fg", "stroke-width": 1}, g);
+    }
+    // labels
+    for (var L2 = 0; L2 < layers.length; L2++) {
+      var lx = ox + L2 * 30 + n * cell + 8, ly = oy - L2 * 26 + 12;
+      el("text", {x: lx, y: ly, "class": "t-muted", "font-size": 11}, s, layers[L2][0]);
+    }
+    // value panel
+    var px = 430, py = 60;
+    el("text", {x: px, y: py, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "Vurgulu tek pikselin değerleri");
+    el("text", {x: px, y: py + 20, "class": "t-muted", "font-size": 12}, s, "(sağlıklı bir orman pikseli, örnek)");
+    layers.forEach(function (ly, i) {
+      var y = py + 52 + i * 34;
+      el("text", {x: px, y: y + 12, "class": "t-fg mono", "font-size": 12}, s, ly[0].split(" · ")[0]);
+      el("rect", {x: px + 70, y: y, width: 200, height: 16, rx: 3, "class": "box"}, s);
+      el("rect", {x: px + 70, y: y, width: Math.max(2, ly[1] / 0.5 * 200), height: 16, rx: 3, "class": i === 3 ? "t-accent" : "t-soil"}, s);
+      el("text", {x: px + 280, y: y + 13, "class": "t-fg mono", "font-size": 12}, s, ly[1].toFixed(2).replace(".", ","));
+    });
+    el("text", {x: px, y: py + 205, "class": "t-muted", "font-size": 11.5}, s, "Kırmızı çok düşük, NIR çok yüksek: sağlıklı bitkinin imzası.");
+  })();
+
+  /* ---------- Geometry ---------- */
+  (function () {
+    var s = $("svg-geom");
+    // panel 1: point
+    el("rect", {x: 10, y: 10, width: 230, height: 210, rx: 8, "class": "box"}, s);
+    el("text", {x: 24, y: 36, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "Nokta");
+    el("circle", {cx: 125, cy: 120, r: 7, "class": "t-accent"}, s);
+    el("text", {x: 125, y: 150, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, "[-70.7029, 45.3211]");
+    el("text", {x: 24, y: 205, "class": "t-muted", "font-size": 11}, s, "Tek konum: boylam, enlem");
+    // panel 2: polygon
+    el("rect", {x: 265, y: 10, width: 230, height: 210, rx: 8, "class": "box"}, s);
+    el("text", {x: 279, y: 36, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "Poligon");
+    var P = [[320, 70], [320, 160], [440, 160], [440, 70]];
+    el("polygon", {points: P.map(function (p) { return p.join(","); }).join(" "), fill: "var(--accent)", "fill-opacity": 0.15, "class": "ln-acc", "stroke-width": 2}, s);
+    P.forEach(function (p, i) {
+      el("circle", {cx: p[0], cy: p[1], r: 5, "class": "t-accent"}, s);
+      el("text", {x: p[0] + (i < 2 ? -10 : 10), y: p[1] + (i % 3 === 0 ? -8 : 18), "text-anchor": i < 2 ? "end" : "start", "class": "t-fg mono", "font-size": 11}, s, "pt" + (i + 1));
+    });
+    el("text", {x: 279, y: 205, "class": "t-muted", "font-size": 11}, s, "Köşe listesi → kapalı alan");
+    // panel 3: feature collection
+    el("rect", {x: 520, y: 10, width: 230, height: 210, rx: 8, "class": "box"}, s);
+    el("text", {x: 534, y: 36, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "FeatureCollection");
+    var shapes = [
+      ["M560,70 L610,62 L622,110 L575,122 Z", "Essex"],
+      ["M622,58 L680,50 L690,120 L626,112 Z", "Coos"],
+      ["M692,62 L735,70 L728,130 L694,124 Z", "Franklin"]
+    ];
+    shapes.forEach(function (sh) { el("path", {d: sh[0], fill: "var(--accent)", "fill-opacity": 0.18, "class": "ln-acc", "stroke-width": 1.5}, s); });
+    var rows = [["NAME", "STATEFP"], ["Essex", "50"], ["Coos", "33"], ["Franklin", "23"]];
+    rows.forEach(function (r, i) {
+      var y = 150 + i * 16;
+      el("text", {x: 545, y: y, "class": i ? "t-fg mono" : "t-muted mono", "font-size": 10.5}, s, r[0]);
+      el("text", {x: 640, y: y, "class": i ? "t-fg mono" : "t-muted mono", "font-size": 10.5}, s, r[1]);
+    });
+  })();
+
+  /* ---------- Collection ---------- */
+  (function () {
+    var s = $("svg-coll");
+    el("text", {x: 20, y: 28, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "filterDate: zaman penceresi");
+    var x0 = 30, x1 = 350, y = 150;
+    function X(yr) { return x0 + (yr - 2013) / (2026.9 - 2013) * (x1 - x0); }
+    el("rect", {x: X(2014), y: 50, width: X(2026) - X(2014), height: 110, rx: 4, fill: "var(--accent)", "fill-opacity": 0.12, "class": "ln-acc", "stroke-dasharray": "4 3"}, s);
+    for (var t = 2013.3; t < 2026.9; t += 16 / 365.25) {
+      var inn = t >= 2014 && t < 2026;
+      el("rect", {x: X(t) - 0.7, y: y - 60, width: 1.4, height: 55, "class": inn ? "t-accent" : "t-muted", "fill-opacity": inn ? 0.9 : 0.35}, s);
+    }
+    el("line", {x1: x0, y1: y, x2: x1, y2: y, "class": "ln-fg"}, s);
+    [2013, 2016, 2019, 2022, 2025].forEach(function (yr) {
+      el("line", {x1: X(yr), y1: y, x2: X(yr), y2: y + 5, "class": "ln-fg"}, s);
+      el("text", {x: X(yr), y: y + 19, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, String(yr));
+    });
+    el("text", {x: X(2014) + 4, y: 64, "class": "t-accent mono", "font-size": 10.5}, s, "2014-01-01 → 2026-01-01");
+    el("text", {x: 30, y: 200, "class": "t-muted", "font-size": 11.5}, s, "Her çizgi bir geçiş (16 günde bir).");
+    el("text", {x: 30, y: 218, "class": "t-muted", "font-size": 11.5}, s, "Yeşiller tutulur, griler atılır.");
+
+    // filterBounds
+    var bx = 400;
+    el("text", {x: bx, y: 28, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "filterBounds: alan filtresi");
+    var counties = "M540,140 L600,128 L640,150 L690,138 L700,190 L640,205 L585,198 L548,185 Z";
+    var tiles = [];
+    for (var r = 0; r < 3; r++) for (var c = 0; c < 4; c++) {
+      var tx = bx + 10 + c * 85 + r * 14, ty = 55 + r * 75;
+      var hit = (r >= 1 && c >= 1 && c <= 3) || (r === 2 && c === 1);
+      tiles.push([tx, ty, hit]);
+    }
+    tiles.forEach(function (t) {
+      el("rect", {x: t[0], y: t[1], width: 92, height: 82, transform: "rotate(-8 " + (t[0] + 46) + " " + (t[1] + 41) + ")",
+        fill: t[2] ? "var(--accent)" : "none", "fill-opacity": t[2] ? 0.1 : 0, "class": t[2] ? "ln-acc" : "ln", "stroke-width": 1.2}, s);
+    });
+    el("path", {d: counties, "class": "t-soil", "fill-opacity": 0.55}, s);
+    el("text", {x: 618, y: 175, "text-anchor": "middle", "class": "t-fg", "font-size": 11.5, "font-weight": 600}, s, "ilçeler");
+    el("text", {x: bx, y: 290, "class": "t-muted", "font-size": 11.5}, s, "Yeşil çerçeveli sahneler ilçelere dokunduğu için tutulur.");
+  })();
+
+  /* ---------- map() ---------- */
+  (function () {
+    var s = $("svg-map");
+    function stack(x, label, cls) {
+      for (var i = 4; i >= 0; i--) {
+        el("rect", {x: x + i * 8, y: 40 + i * 8, width: 90, height: 70, rx: 4, "class": cls}, s);
+      }
+      el("text", {x: x + 61, y: 170, "text-anchor": "middle", "class": "t-fg", "font-size": 12.5, "font-weight": 600}, s, label);
+    }
+    stack(30, "ham görüntüler (N adet)", "box");
+    // cloud blobs on input
+    el("ellipse", {cx: 75, cy: 70, rx: 20, ry: 10, "class": "t-muted", "fill-opacity": 0.35}, s);
+    arrow(s, 168, 95, 268, 95);
+    el("rect", {x: 275, y: 55, width: 210, height: 80, rx: 10, "class": "box-acc"}, s);
+    el("text", {x: 380, y: 85, "text-anchor": "middle", "class": "t-fg mono", "font-size": 13}, s, "function prepL8(image)");
+    el("text", {x: 380, y: 108, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5}, s, "maskele + ölçekle");
+    el("text", {x: 380, y: 125, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5}, s, "tek bir görüntü için tarif");
+    arrow(s, 492, 95, 592, 95, "ln-acc");
+    stack(600, "hazır görüntüler (N adet)", "box-acc");
+    el("text", {x: 380, y: 190, "text-anchor": "middle", "class": "t-muted mono", "font-size": 11.5}, s, ".map(prepL8)  → tarif, yığındaki her görüntüye ayrı ayrı uygulanır");
+  })();
+
+  /* ---------- QA bits ---------- */
+  (function () {
+    var inp = $("qa-in"), bitsEl = $("qa-bits"), idxEl = $("qa-idx");
+    for (var b = 15; b >= 0; b--) {
+      var d = document.createElement("div"); d.className = "bit" + (b === 3 || b === 4 ? " key" : ""); d.id = "bit" + b; bitsEl.appendChild(d);
+      var i = document.createElement("div"); i.textContent = b; idxEl.appendChild(i);
+    }
+    function upd() {
+      var v = Math.max(0, Math.min(65535, parseInt(inp.value, 10) || 0));
+      for (var b = 0; b < 16; b++) {
+        var on = (v >> b) & 1, d = $("bit" + b);
+        d.textContent = on; d.classList.toggle("on", !!on);
+      }
+      var c = v & 8, sh = v & 16;
+      $("qa-c").textContent = c; $("qa-s").textContent = sh;
+      var keep = c === 0 && sh === 0, ver = $("qa-v");
+      ver.className = "verdict " + (keep ? "keep" : "drop");
+      ver.textContent = keep ? "İki test de 0 → maske = 1, piksel tutulur." :
+        (c ? "Bulut bit'i açık" : "Gölge bit'i açık") + " → maske = 0, piksel hesaplardan çıkarılır.";
+    }
+    inp.addEventListener("input", upd);
+    document.querySelectorAll("[data-qa]").forEach(function (btn) {
+      btn.addEventListener("click", function () { inp.value = btn.getAttribute("data-qa"); upd(); });
+    });
+    upd();
+  })();
+
+  /* ---------- Spectrum ---------- */
+  (function () {
+    var s = $("svg-spec");
+    var L = 70, R = 730, T = 25, B = 280;
+    function X(w) { return L + (w - 0.4) / 0.6 * (R - L); }
+    function Y(r) { return B - r / 0.55 * (B - T); }
+    var bands = [["B2", 0.452, 0.512, "mavi"], ["B3", 0.533, 0.590, "yeşil"], ["B4", 0.636, 0.673, "kırmızı"], ["B5", 0.851, 0.879, "NIR"]];
+    bands.forEach(function (b) {
+      var key = b[0] === "B4" || b[0] === "B5";
+      el("rect", {x: X(b[1]), y: T, width: X(b[2]) - X(b[1]), height: B - T, fill: key ? "var(--accent)" : "var(--muted)", "fill-opacity": key ? 0.16 : 0.08}, s);
+      el("text", {x: (X(b[1]) + X(b[2])) / 2, y: T - 6, "text-anchor": "middle", "class": key ? "t-accent mono" : "t-muted mono", "font-size": 11, "font-weight": key ? 600 : 400}, s, b[0]);
+    });
+    for (var r = 0; r <= 0.5; r += 0.1) {
+      el("line", {x1: L, y1: Y(r), x2: R, y2: Y(r), "class": "ln", "stroke-width": 0.8}, s);
+      el("text", {x: L - 8, y: Y(r) + 4, "text-anchor": "end", "class": "t-muted mono", "font-size": 10.5}, s, r.toFixed(1).replace(".", ","));
+    }
+    [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].forEach(function (w) {
+      el("text", {x: X(w), y: B + 18, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, w.toFixed(1).replace(".", ","));
+    });
+    el("text", {x: (L + R) / 2, y: B + 40, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5}, s, "Dalga boyu (µm) · görünür ışık 0,4–0,7, sonrası kızılötesi");
+    el("text", {x: 18, y: (T + B) / 2, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5, transform: "rotate(-90 18 " + (T + B) / 2 + ")"}, s, "Yansıma");
+    var curves = [
+      ["Sağlıklı bitki", "var(--c4)", [[0.40, 0.03], [0.45, 0.04], [0.50, 0.05], [0.55, 0.10], [0.60, 0.06], [0.65, 0.04], [0.68, 0.04], [0.70, 0.10], [0.72, 0.30], [0.75, 0.44], [0.80, 0.47], [0.90, 0.48], [1.00, 0.47]]],
+      ["Çıplak toprak", "var(--soil)", [[0.40, 0.08], [0.50, 0.12], [0.60, 0.18], [0.70, 0.23], [0.80, 0.27], [0.90, 0.30], [1.00, 0.32]]],
+      ["Su", "var(--water)", [[0.40, 0.07], [0.50, 0.06], [0.60, 0.04], [0.70, 0.02], [0.80, 0.01], [0.90, 0.005], [1.00, 0.0]]]
+    ];
+    curves.forEach(function (c, i) {
+      var d = c[2].map(function (p, j) { return (j ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1); }).join(" ");
+      el("path", {d: d, fill: "none", stroke: c[1], "stroke-width": 2.6, "stroke-linejoin": "round"}, s);
+      var last = c[2][c[2].length - 1];
+      el("rect", {x: 90, y: 40 + i * 20, width: 14, height: 4, fill: c[1]}, s);
+      el("text", {x: 110, y: 45 + i * 20, "class": "t-fg", "font-size": 11.5}, s, c[0]);
+    });
+    el("text", {x: X(0.655), y: Y(0.04) + 20, "text-anchor": "middle", "class": "t-fg", "font-size": 11}, s, "kırmızıyı yutar");
+    el("text", {x: X(0.865), y: Y(0.48) - 10, "text-anchor": "middle", "class": "t-fg", "font-size": 11}, s, "NIR'ı yansıtır");
+  })();
+
+  /* ---------- NDVI + scale widget ---------- */
+  (function () {
+    var red = $("r-red"), nir = $("r-nir");
+    var presets = [["Sağlıklı orman", 0.04, 0.45], ["Çayır", 0.08, 0.30], ["Kuru / yanık alan", 0.15, 0.20], ["Çıplak toprak", 0.20, 0.26], ["Su", 0.05, 0.02], ["Bulut", 0.45, 0.48]];
+    var box = $("ndvi-presets");
+    presets.forEach(function (p) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = p[0];
+      b.addEventListener("click", function () { red.value = p[1]; nir.value = p[2]; upd(); });
+      box.appendChild(b);
+    });
+    function pos(v) { return ((v + 1) / 2 * 100).toFixed(1) + "%"; }
+    function interp(v) {
+      if (v < 0) return "Su (veya kar)";
+      if (v < 0.15) return "Bitkisiz: toprak, kaya, bulut";
+      if (v < 0.35) return "Seyrek / zayıf bitki";
+      if (v < 0.6) return "Orta yoğunlukta bitki";
+      return "Yoğun, sağlıklı bitki";
+    }
+    function dn(r) { return (r + 0.2) / 0.0000275; }
+    function upd() {
+      var r = parseFloat(red.value), n = parseFloat(nir.value);
+      $("o-red").textContent = r.toFixed(2); $("o-nir").textContent = n.toFixed(2);
+      var v = (n + r) === 0 ? 0 : (n - r) / (n + r);
+      $("ndvi-calc").textContent = "(" + n.toFixed(2) + " − " + r.toFixed(2) + ") / (" + n.toFixed(2) + " + " + r.toFixed(2) + ")";
+      $("ndvi-val").textContent = fmt(v);
+      $("ndvi-txt").textContent = interp(v);
+      $("ndvi-mk").style.left = pos(v); $("ndvi-mk").textContent = fmt(v);
+      // scale section
+      var dr = dn(r), dnn = dn(n), raw = (dnn - dr) / (dnn + dr);
+      $("dn-r").textContent = Math.round(dr).toLocaleString("tr-TR");
+      $("dn-n").textContent = Math.round(dnn).toLocaleString("tr-TR");
+      $("dn-ndvi").textContent = fmt(raw) + "  (ölçeksiz)";
+      $("sr-r").textContent = r.toFixed(2); $("sr-n").textContent = n.toFixed(2);
+      $("sr-ndvi").textContent = fmt(v) + "  (ölçekli)";
+      $("sc-raw").style.left = pos(raw); $("sc-raw").textContent = "ham " + fmt(raw);
+      $("sc-ok").style.left = pos(v); $("sc-ok").textContent = "ölçekli " + fmt(v);
+    }
+    red.addEventListener("input", upd); nir.addEventListener("input", upd);
+    upd();
+  })();
+
+  /* ---------- Composite ---------- */
+  (function () {
+    var s = $("svg-comp");
+    var vals = [0.78, 0.81, 0.12, 0.80, 0.83, 0.79, 0.05, 0.82, 0.80];
+    var dates = ["Haz 3", "Haz 19", "Tem 5", "Tem 21", "Ağu 6", "Ağu 22", "Eyl 7", "Eyl 23", "Eki 9"];
+    var mean = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    var srt = vals.slice().sort(function (a, b) { return a - b; }), med = srt[Math.floor(srt.length / 2)];
+    var L = 60, R = 560, T = 25, B = 245;
+    function Y(v) { return B - v * (B - T); }
+    function X(i) { return L + 20 + i * (R - L - 40) / (vals.length - 1); }
+    [0, 0.2, 0.4, 0.6, 0.8, 1].forEach(function (g) {
+      el("line", {x1: L, y1: Y(g), x2: R, y2: Y(g), "class": "ln", "stroke-width": 0.8}, s);
+      el("text", {x: L - 8, y: Y(g) + 4, "text-anchor": "end", "class": "t-muted mono", "font-size": 10.5}, s, g.toFixed(1).replace(".", ","));
+    });
+    el("line", {x1: L, y1: Y(mean), x2: R, y2: Y(mean), "class": "ln-warn", "stroke-width": 2, "stroke-dasharray": "6 4"}, s);
+    el("line", {x1: L, y1: Y(med), x2: R, y2: Y(med), "class": "ln-acc", "stroke-width": 2.4}, s);
+    vals.forEach(function (v, i) {
+      var bad = v < 0.3;
+      el("circle", {cx: X(i), cy: Y(v), r: 6, "class": bad ? "t-warn" : "t-accent"}, s);
+      el("text", {x: X(i), y: B + 18, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10}, s, dates[i]);
+      if (bad) el("text", {x: X(i), y: Y(v) - 12, "text-anchor": "middle", "class": "t-warn", "font-size": 10.5}, s, "bulut artığı");
+    });
+    el("text", {x: 580, y: Y(med) + 4, "class": "t-accent", "font-size": 12.5, "font-weight": 600}, s, "Ortanca = " + fmt(med));
+    el("text", {x: 580, y: Y(mean) + 4, "class": "t-warn", "font-size": 12.5, "font-weight": 600}, s, "Ortalama = " + fmt(mean));
+    el("text", {x: 580, y: Y(med) + 24, "class": "t-muted", "font-size": 11}, s, "gerçek ormanı yansıtır");
+    el("text", {x: 580, y: Y(mean) + 24, "class": "t-muted", "font-size": 11}, s, "iki kötü ölçüm aşağı çekti");
+    el("text", {x: 18, y: (T + B) / 2, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5, transform: "rotate(-90 18 " + (T + B) / 2 + ")"}, s, "NDVI");
+  })();
+
+  /* ---------- K-Means ---------- */
+  (function () {
+    var s = $("svg-km");
+    var W = 720, L = 30, R = 690, xmin = -0.4, xmax = 1.0;
+    function X(v) { return L + (v - xmin) / (xmax - xmin) * (R - L); }
+    var ramp = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)"];
+    function mul(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+    var rng = mul(11);
+    function gauss(r) { var u = r() || 1e-9, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+    var groups = [[-0.15, 8], [0.18, 14], [0.5, 22], [0.8, 36]], pts = [];
+    groups.forEach(function (g) { for (var i = 0; i < g[1]; i++) pts.push({v: Math.max(-0.35, Math.min(0.97, g[0] + gauss(rng) * 0.06)), y: 70 + rng() * 110, c: -1}); });
+    var K = 4, centers, step, sorted = false, initSeed = 3, done = false;
+    function reset() {
+      var r = mul(initSeed++), idx = [];
+      while (idx.length < K) { var k = Math.floor(r() * pts.length); if (idx.indexOf(k) < 0) idx.push(k); }
+      centers = idx.map(function (k) { return pts[k].v; });
+      pts.forEach(function (p) { p.c = -1; }); step = 0; done = false; draw();
+    }
+    function iterate() {
+      var changed = 0;
+      pts.forEach(function (p) {
+        var best = 0, bd = 9;
+        centers.forEach(function (c, j) { var d = Math.abs(p.v - c); if (d < bd) { bd = d; best = j; } });
+        if (p.c !== best) { changed++; p.c = best; }
+      });
+      centers = centers.map(function (c, j) {
+        var m = pts.filter(function (p) { return p.c === j; });
+        return m.length ? m.reduce(function (a, p) { return a + p.v; }, 0) / m.length : c;
+      });
+      step++; if (changed === 0) done = true; return changed;
+    }
+    function rankOf() {
+      var order = centers.map(function (c, j) { return [c, j]; }).sort(function (a, b) { return a[0] - b[0]; });
+      var rk = []; order.forEach(function (o, i) { rk[o[1]] = i; }); return rk;
+    }
+    function draw(changed) {
+      while (s.firstChild) s.removeChild(s.firstChild);
+      var rk = rankOf();
+      el("line", {x1: L, y1: 195, x2: R, y2: 195, "class": "ln-fg"}, s);
+      [-0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.0].forEach(function (t) {
+        el("line", {x1: X(t), y1: 195, x2: X(t), y2: 200, "class": "ln-fg"}, s);
+        el("text", {x: X(t), y: 215, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, t.toFixed(1).replace(".", ","));
+      });
+      el("text", {x: R, y: 228, "text-anchor": "end", "class": "t-muted", "font-size": 10.5}, s, "NDVI");
+      pts.forEach(function (p) {
+        var col = p.c < 0 ? "var(--muted)" : ramp[sorted ? rk[p.c] : p.c];
+        el("circle", {cx: X(p.v), cy: p.y, r: 5, fill: col, "fill-opacity": p.c < 0 ? 0.5 : 0.95}, s);
+      });
+      centers.forEach(function (c, j) {
+        var col = ramp[sorted ? rk[j] : j];
+        el("line", {x1: X(c), y1: 40, x2: X(c), y2: 190, stroke: col, "stroke-width": 2, "stroke-dasharray": "5 3"}, s);
+        el("rect", {x: X(c) - 30, y: 14, width: 60, height: 22, rx: 4, fill: col}, s);
+        el("text", {x: X(c), y: 29, "text-anchor": "middle", "font-size": 11.5, "font-weight": 600, fill: "#10160f"}, s, "küme " + (sorted ? rk[j] : j));
+      });
+      var st = "Adım " + step + (step === 0 ? " · merkezler rastgele seçildi, pikseller henüz atanmadı." :
+        (done ? " · merkezler artık yer değiştirmiyor, algoritma bitti." : " · bu adımda " + changed + " piksel grup değiştirdi."));
+      if (sorted) st += " Numaralar NDVI'ye göre sıralı: 0 en düşük.";
+      else if (step > 0) st += " Numaralar rastgele: renk sırası NDVI sırasıyla uyuşmayabilir.";
+      $("km-status").textContent = st;
+    }
+    $("km-step").addEventListener("click", function () { if (!done) draw(iterate()); });
+    $("km-run").addEventListener("click", function () { var c = 0, g = 0; while (!done && g++ < 50) c = iterate(); draw(c); });
+    $("km-reset").addEventListener("click", reset);
+    $("km-sort").addEventListener("click", function () { sorted = !sorted; this.setAttribute("aria-pressed", sorted); draw(0); });
+    reset();
+  })();
+
+  /* ---------- Year x month grid ---------- */
+  (function () {
+    var s = $("svg-grid");
+    var months = ["Haz", "Tem", "Ağu"], empty = {"2015-0": 1, "2019-2": 1, "2023-1": 1};
+    var L = 60, cw = 54, ch = 40, T = 30;
+    for (var y = 0; y < 12; y++) {
+      var yr = 2014 + y;
+      el("text", {x: L + y * cw + cw / 2 - 2, y: T - 10, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, String(yr));
+      for (var m = 0; m < 3; m++) {
+        var e = empty[yr + "-" + m];
+        el("rect", {x: L + y * cw, y: T + m * ch, width: cw - 4, height: ch - 4, rx: 4,
+          fill: e ? "none" : "var(--accent)", "fill-opacity": e ? 0 : 0.22 + m * 0.18, "class": e ? "ln-warn" : "", "stroke-dasharray": e ? "4 3" : ""}, s);
+        if (e) el("text", {x: L + y * cw + (cw - 4) / 2, y: T + m * ch + 23, "text-anchor": "middle", "class": "t-warn", "font-size": 10}, s, "boş");
+      }
+    }
+    months.forEach(function (mo, m) { el("text", {x: L - 10, y: T + m * ch + 22, "text-anchor": "end", "class": "t-fg", "font-size": 11.5}, s, mo); });
+    el("text", {x: L, y: T + 3 * ch + 24, "class": "t-muted", "font-size": 11.5}, s, "Her kutu = o ayın temiz görüntülerinin piksel bazında ortalaması (tek bir NDVI görüntüsü).");
+    el("text", {x: L, y: T + 3 * ch + 42, "class": "t-muted", "font-size": 11.5}, s, "12 yıl × 3 ay = 36 kutu → grafikte 36 nokta (boşlar atılınca daha az).");
+  })();
+
+  /* ---------- Reducer ---------- */
+  (function () {
+    var s = $("svg-red");
+    var v = [0.82, 0.79, 0.85, 0.88, 0.76, 0.81, 0.84, 0.80, 0.42, 0.55, 0.78, 0.83, 0.12, 0.35, 0.71, 0.77];
+    var mean = v.reduce(function (a, b) { return a + b; }, 0) / v.length, mx = Math.max.apply(null, v);
+    var c = 44, x0 = 40, y0 = 20;
+    v.forEach(function (val, i) {
+      var r = Math.floor(i / 4), col = i % 4;
+      el("rect", {x: x0 + col * c, y: y0 + r * c, width: c - 2, height: c - 2, fill: "var(--accent)", "fill-opacity": (0.15 + val * 0.8).toFixed(2)}, s);
+      el("text", {x: x0 + col * c + (c - 2) / 2, y: y0 + r * c + 26, "text-anchor": "middle", "class": "t-fg mono", "font-size": 11, "font-weight": val === mx ? 700 : 400}, s, val.toFixed(2).replace(".", ","));
+    });
+    el("text", {x: x0, y: y0 + 4 * c + 20, "class": "t-muted", "font-size": 11.5}, s, "Bölgedeki 16 piksel (bir ay)");
+    arrow(s, 230, 70, 330, 55, "ln-acc"); arrow(s, 230, 130, 330, 150);
+    el("rect", {x: 340, y: 25, width: 380, height: 60, rx: 8, "class": "box-acc"}, s);
+    el("text", {x: 356, y: 50, "class": "t-fg mono", "font-size": 13}, s, "ee.Reducer.mean()  →  " + fmt(mean));
+    el("text", {x: 356, y: 70, "class": "t-muted", "font-size": 11.5}, s, "Hepsinin ortalaması: bölgenin genel durumu");
+    el("rect", {x: 340, y: 120, width: 380, height: 60, rx: 8, "class": "box"}, s);
+    el("text", {x: 356, y: 145, "class": "t-fg mono", "font-size": 13}, s, "ee.Reducer.max()   →  " + fmt(mx));
+    el("text", {x: 356, y: 165, "class": "t-muted", "font-size": 11.5}, s, "Sadece en yeşil tek piksel; açıklığı ve zararı gizler");
+  })();
+})();
+</script>
+</body>
+</html>

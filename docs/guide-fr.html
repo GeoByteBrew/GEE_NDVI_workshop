@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Guide de l'atelier NDVI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column (~68ch), wider figures; section chips at the top. Colours derived from the NDVI ramp (soil brown → forest green). */
+:root {
+  --bg: #f3f6f1;
+  --surface: #ffffff;
+  --fg: #17221b;
+  --muted: #586a5d;
+  --line: #d5ded4;
+  --code-bg: #e9efe6;
+  --accent: #2c7a38;
+  --accent-soft: #dcebd9;
+  --soil: #9a6230;
+  --warn: #b5462f;
+  --c1: #a8743a; --c2: #d6bd5c; --c3: #7cbc58; --c4: #2e7d32;
+  --water: #3d7fb3;
+  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1511; --surface: #141e18; --fg: #e2eae3; --muted: #94a798; --line: #27352c;
+    --code-bg: #18241d; --accent: #74cf80; --accent-soft: #1d3324; --soil: #d39a5f; --warn: #ee7d65;
+    --c1: #c58a4a; --c2: #e0c96a; --c3: #8fd068; --c4: #3fa046; --water: #6aa8db;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1511; --surface: #141e18; --fg: #e2eae3; --muted: #94a798; --line: #27352c;
+  --code-bg: #18241d; --accent: #74cf80; --accent-soft: #1d3324; --soil: #d39a5f; --warn: #ee7d65;
+  --c1: #c58a4a; --c2: #e0c96a; --c3: #8fd068; --c4: #3fa046; --water: #6aa8db;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16.5px; line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 80px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.65rem; font-weight: 700; margin-bottom: 0.6rem; }
+h3 { font-size: 1.12rem; font-weight: 700; margin: 1.4rem 0 0.4rem; }
+p { margin: 0 0 0.9rem; }
+.lede { font-size: 1.12rem; color: var(--muted); margin-top: 0.8rem; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+a { color: var(--accent); }
+code { font-family: var(--font-mono); font-size: 0.88em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+pre { font-family: var(--font-mono); font-size: 0.84rem; line-height: 1.55; background: var(--code-bg); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0.6rem 0 1.2rem; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.cm { color: var(--muted); }
+
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 1.6rem 0 0; }
+nav.toc a { font-size: 0.82rem; text-decoration: none; color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; background: var(--surface); }
+nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+section { padding-top: 3rem; margin-top: 3rem; border-top: 1px solid var(--line); scroll-margin-top: 12px; }
+.step-no { font-family: var(--font-mono); font-size: 0.8rem; color: var(--muted); }
+
+figure { margin: 1.2rem 0 1.6rem; }
+figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; }
+.fig { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; overflow-x: auto; }
+.fig svg { display: block; width: 100%; height: auto; }
+.fig.wide svg { min-width: 560px; }
+
+.analogy { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 1rem 0 1.2rem; }
+.analogy strong { font-family: var(--font-display); }
+.fix { border-left: 3px solid var(--warn); padding: 8px 14px; margin: 1rem 0 1.2rem; background: var(--surface); border-radius: 0 8px 8px 0; font-size: 0.95rem; }
+.fix b { color: var(--warn); }
+
+/* SVG token classes */
+.t-fg { fill: var(--fg); } .t-muted { fill: var(--muted); } .t-accent { fill: var(--accent); }
+.t-warn { fill: var(--warn); } .t-soil { fill: var(--soil); } .t-water { fill: var(--water); }
+.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.box-acc { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.2; }
+.ln { stroke: var(--line); fill: none; } .ln-fg { stroke: var(--muted); fill: none; }
+.ln-acc { stroke: var(--accent); fill: none; } .ln-warn { stroke: var(--warn); fill: none; }
+svg text { font-family: var(--font-body); }
+svg .mono { font-family: var(--font-mono); }
+svg a:focus-visible rect { stroke: var(--accent); stroke-width: 2.5; }
+
+/* widgets */
+.widget { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 1.2rem 0 1.6rem; }
+.widget h4 { margin: 0 0 0.6rem; font-family: var(--font-display); font-size: 1rem; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button, .btn { font: inherit; font-size: 0.85rem; border: 1px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 6px; padding: 5px 11px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+input[type="number"] { font: inherit; font-family: var(--font-mono); width: 8.5em; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.sl { display: grid; grid-template-columns: 7.5em 1fr 4.5em; gap: 10px; align-items: center; margin: 8px 0; font-size: 0.92rem; }
+.sl output { font-family: var(--font-mono); text-align: right; font-variant-numeric: tabular-nums; }
+.big { font-family: var(--font-mono); font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+.kv > div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 0; }
+.kv .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.ramp { position: relative; height: 16px; border-radius: 4px; margin: 26px 0 6px;
+  background: linear-gradient(90deg, var(--water) 0%, #8a8f86 45%, var(--c1) 50%, var(--c2) 62%, var(--c3) 78%, var(--c4) 100%); }
+.ramp .mk { position: absolute; top: -22px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 0.75rem; white-space: nowrap; }
+.ramp .mk::after { content: ""; position: absolute; left: 50%; top: 18px; width: 2px; height: 24px; background: var(--fg); transform: translateX(-1px); }
+.ramp .mk.raw { color: var(--warn); }
+.ramp .mk.raw::after { background: var(--warn); }
+.ramp-ax { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+.bits { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; margin: 12px 0 4px; }
+.bit { text-align: center; font-family: var(--font-mono); border: 1px solid var(--line); border-radius: 4px; padding: 4px 0; font-size: 0.95rem; }
+.bit.on { background: var(--code-bg); font-weight: 600; }
+.bit.key { border-color: var(--accent); border-width: 2px; }
+.bit.key.on { background: var(--warn); color: var(--surface); border-color: var(--warn); }
+.bitidx { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); text-align: center; }
+.verdict { font-weight: 600; margin-top: 10px; }
+.verdict.keep { color: var(--accent); } .verdict.drop { color: var(--warn); }
+
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+tr.hit td { background: var(--accent-soft); font-weight: 600; }
+.tbl { overflow-x: auto; }
+
+ol.flow { list-style: none; padding: 0; margin: 1rem 0; display: grid; gap: 8px; counter-reset: f; }
+ol.flow li { counter-increment: f; display: grid; grid-template-columns: 2rem 1fr; gap: 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+ol.flow li::before { content: counter(f); font-family: var(--font-mono); font-weight: 500; color: var(--accent); }
+ol.flow li > div { min-width: 0; }
+
+dl.gl { display: grid; grid-template-columns: minmax(8em, 12em) 1fr; gap: 8px 18px; }
+dl.gl dt { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; }
+dl.gl dd { margin: 0; color: var(--fg); }
+@media (max-width: 560px) {
+  dl.gl { grid-template-columns: 1fr; gap: 2px; } dl.gl dd { margin-bottom: 10px; }
+  .sl { grid-template-columns: 6em 1fr 4em; }
+  .bit { font-size: 0.75rem; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Google Earth Engine · NDVI · Depuis zéro</div>
+  <h1>De l'image satellite à la carte de santé de la végétation</h1>
+  <p class="lede prose">Un guide pas à pas de chaque opération du script de l'atelier : ce qu'elle fait, pourquoi on la fait, et où elle se trouve dans le code. Dans les encadrés interactifs, vous pouvez modifier les valeurs et voir le résultat par vous-même.</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#overview">Vue d'ensemble</a><a href="#pixels">Pixels et bandes</a><a href="#geometry">Géométries</a>
+    <a href="#collection">Collections</a><a href="#map">map()</a><a href="#clouds">Masque nuages</a>
+    <a href="#ndvi">NDVI</a><a href="#scale">Facteur d'échelle</a><a href="#composite">Composite</a>
+    <a href="#kmeans">K-Means</a><a href="#charts">Graphiques</a><a href="#export">Export et QGIS</a><a href="#glossary">Glossaire</a>
+  </nav>
+</header>
+
+<!-- ========== VUE D'ENSEMBLE ========== -->
+<section id="overview">
+  <h2>Vue d'ensemble : que fait-on ?</h2>
+  <div class="prose">
+    <p>La question est simple : <strong>quel est l'état de la végétation dans trois comtés forestiers du nord-est des États-Unis, et comment a-t-il évolué pendant les étés de 2014 à 2025 ?</strong></p>
+    <p>Pour y répondre, on prend 12 ans d'images Landsat 8, on retire les nuages, on calcule un « score de verdure » (le NDVI) pour chaque pixel, puis on transforme ces scores en cartes, en classes et en graphiques. Le script suit ces huit étapes :</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-pipeline" viewBox="0 0 800 250" role="img" aria-label="Schéma du déroulé en huit étapes"></svg></div>
+    <figcaption>Cliquez sur une case pour aller à la section correspondante. La ligne du haut se lit de gauche à droite, celle du bas de droite à gauche.</figcaption>
+  </figure>
+  <div class="analogy prose"><strong>Comment fonctionne GEE ?</strong> Votre code est une recette. Vous l'envoyez aux serveurs de Google : ils détiennent les ingrédients (des pétaoctets d'images) et font la cuisine. Ils ne cuisinent d'ailleurs que la partie affichée à l'écran. C'est pourquoi 12 ans de données s'affichent en quelques secondes, alors qu'un <code>Export</code> calcule toute la zone et peut prendre plusieurs minutes.</div>
+</section>
+
+<!-- ========== PIXELS ========== -->
+<section id="pixels">
+  <div class="step-no">Notion de base</div>
+  <h2>Une image satellite est en réalité un tableau de nombres</h2>
+  <div class="prose">
+    <p>Pensez à une photo de téléphone : elle est faite de petits carrés, les <strong>pixels</strong>. Avec Landsat, chaque pixel couvre <strong>30 × 30 mètres</strong> au sol ; un terrain de football fait environ 8 pixels.</p>
+    <p>La différence : un téléphone mesure 3 couleurs par pixel (rouge, vert, bleu). Landsat mesure aussi des lumières que nos yeux ne voient pas. Chaque type de lumière forme une couche à part, appelée <strong>bande</strong>. Une image est une pile de bandes.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-bands" viewBox="0 0 760 300" role="img" aria-label="Quatre bandes superposées et les valeurs d'un pixel"></svg></div>
+    <figcaption>Le pixel situé au même endroit porte une valeur différente dans chaque couche. Ces valeurs indiquent la part de cette lumière que la surface renvoie (0 = rien, 1 = tout).</figcaption>
+  </figure>
+  <p class="prose">Les bandes utilisées dans l'atelier :</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Nom dans le code</th><th>Lumière</th><th>Longueur d'onde</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><code>SR_B2</code></td><td>Bleu</td><td class="num">0,45–0,51 µm</td><td>Couleurs naturelles</td></tr>
+      <tr><td><code>SR_B3</code></td><td>Vert</td><td class="num">0,53–0,59 µm</td><td>Couleurs naturelles</td></tr>
+      <tr><td><code>SR_B4</code></td><td>Rouge</td><td class="num">0,64–0,67 µm</td><td>Couleurs naturelles + NDVI</td></tr>
+      <tr><td><code>SR_B5</code></td><td>Proche infrarouge (PIR)</td><td class="num">0,85–0,88 µm</td><td>NDVI</td></tr>
+      <tr><td><code>QA_PIXEL</code></td><td>Pas une lumière : un indicateur de qualité</td><td class="num">—</td><td>Masque nuages</td></tr>
+    </tbody>
+  </table></div>
+  <p class="prose" style="margin-top:1rem"><code>SR</code> signifie « Surface Reflectance » (réflectance de surface) : des valeurs corrigées des effets de l'atmosphère, proches de la réflectance réelle du sol.</p>
+</section>
+
+<!-- ========== GÉOMÉTRIES ========== -->
+<section id="geometry">
+  <div class="step-no">Étape 1 · section 1 du script</div>
+  <h2>Géométries : « où regarde-t-on ? »</h2>
+  <div class="prose">
+    <p>On ne veut pas traiter toute la planète. On commence par définir le lieu qui nous intéresse. L'atelier utilise trois types de géométries :</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-geom" viewBox="0 0 760 230" role="img" aria-label="Exemples de point, de polygone et de FeatureCollection"></svg></div>
+  </figure>
+  <pre><code><span class="cm">// Point : [longitude, latitude] — attention, la longitude (x) vient en premier</span>
+var pt1 = ee.Geometry.Point([-70.7029, 45.3211]);
+
+<span class="cm">// Polygone : une liste de sommets</span>
+var region = ee.Geometry.Polygon([[
+  [-70.7029, 45.3211], [-70.7029, 45.1511],
+  [-70.4118, 45.1511], [-70.4118, 45.3211]
+]]);</code></pre>
+  <h3>FeatureCollection : des formes avec une table attributaire</h3>
+  <div class="prose">
+    <p><code>TIGER/2018/Counties</code> est un jeu de données prêt à l'emploi contenant les limites de tous les comtés des États-Unis. Chaque comté est une <strong>Feature</strong> : une forme et une ligne d'attributs (nom, code de l'État…). L'ensemble forme une <strong>FeatureCollection</strong>, l'équivalent GEE d'une couche vecteur dans QGIS.</p>
+    <p>Pourquoi deux filtres à la fois ? Parce que beaucoup de comtés portent le même nom :</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>NAME</th><th>STATEFP</th><th>État</th><th>Passe les deux filtres ?</th></tr></thead>
+    <tbody>
+      <tr><td>Essex</td><td class="num">25</td><td>Massachusetts</td><td>Non</td></tr>
+      <tr><td>Essex</td><td class="num">34</td><td>New Jersey</td><td>Non</td></tr>
+      <tr><td>Essex</td><td class="num">36</td><td>New York</td><td>Non</td></tr>
+      <tr class="hit"><td>Essex</td><td class="num">50</td><td>Vermont</td><td>Oui</td></tr>
+      <tr><td>Essex</td><td class="num">51</td><td>Virginie</td><td>Non</td></tr>
+    </tbody>
+  </table></div>
+  <pre><code><span class="cm">// Garder les comtés dont le nom EST Essex ET dont le code d'État EST 50</span>
+var vt = counties.filter(ee.Filter.and(
+  ee.Filter.eq('STATEFP', '50'), ee.Filter.eq('NAME', 'Essex')));
+
+<span class="cm">// Fusionner les trois comtés en une seule collection</span>
+var forests = vt.merge(nh).merge(me);</code></pre>
+  <p class="prose"><code>STATEFP</code> est stocké sous forme de texte, d'où les guillemets dans <code>'50'</code>. Avec <code>50</code> (un nombre), rien ne correspondrait.</p>
+</section>
+
+<!-- ========== COLLECTIONS ========== -->
+<section id="collection">
+  <div class="step-no">Étape 2 · section 2 du script</div>
+  <h2>ImageCollection : une pile d'images prises dans le temps</h2>
+  <div class="prose">
+    <p>Depuis 2013, Landsat 8 survole chaque point de la Terre <strong>tous les 16 jours</strong> et prend une image. Chaque passage produit une image couvrant une bande de terrain (une « scène » d'environ 185 × 180 km). Toutes se trouvent dans la collection <code>LANDSAT/LC08/C02/T1_L2</code> : des centaines de milliers d'images dans le monde.</p>
+    <p>Deux filtres la réduisent à une petite pile exploitable :</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-coll" viewBox="0 0 760 300" role="img" aria-label="Schéma du filtre temporel et du filtre spatial"></svg></div>
+    <figcaption>À gauche, <code>filterDate</code> sélectionne une fenêtre sur l'axe du temps. À droite, <code>filterBounds</code> garde les scènes qui touchent les comtés et écarte les autres.</figcaption>
+  </figure>
+  <pre><code>var landsat = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+  .filterDate('2014-01-01', '2026-01-01')  <span class="cm">// date de fin exclue → jusqu'à fin 2025</span>
+  .filterBounds(forests)                   <span class="cm">// seulement les scènes qui touchent nos comtés</span>
+  .map(prepL8);                            <span class="cm">// appliquer la fonction de préparation à chacune</span>
+
+print("Nombre d'images Landsat", landsat.size());</code></pre>
+  <div class="fix prose"><b>Dans cette version :</b> la date de fin est <code>'2026-01-01'</code> pour inclure tout 2025 (GEE exclut la date de fin). Le composite est calculé sur la collection filtrée spatialement, pas sur une pile mondiale non filtrée.</div>
+</section>
+
+<!-- ========== MAP ========== -->
+<section id="map">
+  <div class="step-no">Notion</div>
+  <h2><code>.map()</code> : appliquer la même opération à chaque image</h2>
+  <div class="prose">
+    <p>La pile contient des centaines d'images, et on veut faire la même chose à chacune : retirer les nuages, mettre les valeurs à l'échelle, calculer le NDVI. On écrit donc l'opération une seule fois sous forme de <strong>fonction</strong>, puis on l'applique à chaque image avec <code>.map()</code>.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-map" viewBox="0 0 760 200" role="img" aria-label="Une fonction appliquée à chaque image par map"></svg></div>
+  </figure>
+  <div class="analogy prose"><strong>Analogie :</strong> une macro de retouche photo qui applique le même filtre à toutes les photos d'un album. La fonction décrit quoi faire avec une photo ; <code>.map()</code> applique cette recette à tout l'album. 400 images en entrée, 400 images en sortie.</div>
+</section>
+
+<!-- ========== NUAGES ========== -->
+<section id="clouds">
+  <div class="step-no">Étape 3 · fonction <code>prepL8</code></div>
+  <h2>Masque nuages : lire la bande QA_PIXEL</h2>
+  <div class="prose">
+    <p>Un nuage cache la forêt qui se trouve dessous. Le NDVI d'un pixel nuageux mesure le nuage, pas la forêt : il faut donc écarter ces pixels.</p>
+    <p>Landsat attribue à chaque pixel un <strong>indicateur de qualité</strong> : la bande <code>QA_PIXEL</code>. C'est un seul nombre, mais il regroupe en fait 16 réponses oui/non. Écrit en binaire, chaque chiffre (<strong>bit</strong>) répond à une question :</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Bit</th><th>Question</th><th>Bit</th><th>Question</th></tr></thead>
+    <tbody>
+      <tr><td class="num">0</td><td>Pas de donnée ?</td><td class="num">5</td><td>Neige ?</td></tr>
+      <tr><td class="num">1</td><td>Bord de nuage ?</td><td class="num">6</td><td>Dégagé ?</td></tr>
+      <tr><td class="num">2</td><td>Cirrus ?</td><td class="num">7</td><td>Eau ?</td></tr>
+      <tr class="hit"><td class="num">3</td><td>Nuage ?</td><td class="num">8–15</td><td>Niveaux de confiance (deux bits chacun)</td></tr>
+      <tr class="hit"><td class="num">4</td><td>Ombre de nuage ?</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="widget" id="w-qa">
+    <h4>À vous : décoder une valeur de QA_PIXEL</h4>
+    <div class="row">
+      <label for="qa-in">Valeur</label>
+      <input type="number" id="qa-in" min="0" max="65535" value="22280">
+      <button type="button" data-qa="21824">Sol dégagé</button>
+      <button type="button" data-qa="21952">Eau dégagée</button>
+      <button type="button" data-qa="22280">Nuage</button>
+      <button type="button" data-qa="23824">Ombre de nuage</button>
+    </div>
+    <div class="bits" id="qa-bits" aria-live="polite"></div>
+    <div class="bitidx" id="qa-idx"></div>
+    <div class="kv">
+      <div><div class="lbl">Test nuage · valeur AND 8</div><div class="big" id="qa-c">0</div></div>
+      <div><div class="lbl">Test ombre · valeur AND 16</div><div class="big" id="qa-s">0</div></div>
+    </div>
+    <div class="verdict" id="qa-v"></div>
+  </div>
+
+  <div class="prose">
+    <p><code>1 &lt;&lt; 3</code> signifie « décaler 1 de trois positions vers la gauche » : <code>1000</code> en binaire, soit 8. <code>1 &lt;&lt; 4</code> = 16. <code>bitwiseAnd(8)</code> ne regarde que le bit 3 : si le résultat vaut 0, le bit est éteint et le pixel n'est pas un nuage.</p>
+  </div>
+  <pre><code>function prepL8(image) {
+  var qa = image.select('QA_PIXEL');
+  var mask = qa.bitwiseAnd(1 &lt;&lt; 3).eq(0)       <span class="cm">// bit nuage éteint ET</span>
+    .and(qa.bitwiseAnd(1 &lt;&lt; 4).eq(0));          <span class="cm">// bit ombre éteint → 1 (garder), sinon 0</span>
+  var sr = image.select('SR_B.').multiply(0.0000275).add(-0.2);  <span class="cm">// mise à l'échelle (voir plus bas)</span>
+  return image.addBands(sr, null, true).updateMask(mask);
+}</code></pre>
+  <p class="prose"><code>updateMask</code> considère comme « absents » les pixels où le masque vaut 0. Ils ne sont pas supprimés, mais aucun calcul ultérieur ne les utilise, et ils apparaissent transparents sur la carte.</p>
+</section>
+
+<!-- ========== NDVI ========== -->
+<section id="ndvi">
+  <div class="step-no">Étape 5 · section 3 du script</div>
+  <h2>NDVI : un « score de santé » de la végétation</h2>
+  <div class="prose">
+    <p>Une feuille en bonne santé fait deux choses à la fois :</p>
+    <p><strong>Elle absorbe la lumière rouge.</strong> La chlorophylle utilise le rouge pour la photosynthèse, la feuille en renvoie donc très peu.<br>
+    <strong>Elle réfléchit fortement le proche infrarouge (PIR).</strong> La structure interne des cellules de la feuille renvoie le PIR comme un miroir. Nous ne le voyons pas, le satellite si.</p>
+    <p>Le sol et l'eau n'ont pas ce comportement. Plus l'écart entre les deux est grand, plus la végétation est dense et saine.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-spec" viewBox="0 0 760 330" role="img" aria-label="Courbes de réflectance de la végétation, du sol et de l'eau"></svg></div>
+    <figcaption>Courbes de réflectance typiques (schématiques). La courbe de la végétation est au plus bas dans le rouge et au plus haut dans le PIR. Ce saut s'appelle le « red edge ».</figcaption>
+  </figure>
+  <div class="prose">
+    <p>Le NDVI résume cet écart en un seul nombre :</p>
+    <pre><code>NDVI = (PIR − Rouge) / (PIR + Rouge)</code></pre>
+    <p>Pourquoi diviser ? Une même forêt paraît plus claire sur un versant ensoleillé et plus sombre à l'ombre, mais le rapport reste le même. Le résultat est toujours compris entre −1 et +1.</p>
+  </div>
+
+  <div class="widget" id="w-ndvi">
+    <h4>À vous : modifiez les réflectances et observez le NDVI</h4>
+    <div class="row" id="ndvi-presets"></div>
+    <div class="sl"><label for="r-red">Rouge (B4)</label><input type="range" id="r-red" min="0" max="0.6" step="0.01" value="0.04"><output id="o-red">0.04</output></div>
+    <div class="sl"><label for="r-nir">PIR (B5)</label><input type="range" id="r-nir" min="0" max="0.6" step="0.01" value="0.45"><output id="o-nir">0.45</output></div>
+    <div class="kv">
+      <div><div class="lbl">Calcul</div><div class="mono" id="ndvi-calc" style="font-family:var(--font-mono);font-size:0.92rem"></div></div>
+      <div><div class="lbl">NDVI</div><div class="big" id="ndvi-val"></div></div>
+      <div><div class="lbl">Lecture</div><div id="ndvi-txt" style="font-weight:600"></div></div>
+    </div>
+    <div class="ramp" id="ndvi-ramp"><span class="mk" id="ndvi-mk">NDVI</span></div>
+    <div class="ramp-ax"><span>−1 eau</span><span>0 sol, roche, nuage</span><span>+1 forêt dense</span></div>
+  </div>
+  <pre><code>function addNDVI(image) {
+  <span class="cm">// normalizedDifference(['A','B']) = (A − B) / (A + B)</span>
+  var nd = image.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI');
+  return image.addBands(nd).select('NDVI');
+}
+var ndvi = landsat.map(addNDVI);   <span class="cm">// une image NDVI par image de la pile</span></code></pre>
+  <p class="prose"><code>normalizedDifference</code> est le raccourci intégré de <code>nir.subtract(red).divide(nir.add(red))</code>. Le résultat est identique.</p>
+</section>
+
+<!-- ========== ÉCHELLE ========== -->
+<section id="scale">
+  <div class="step-no">Étape 4 · le point méthodologique le plus important</div>
+  <h2>Facteur d'échelle : des nombres bruts à la vraie réflectance</h2>
+  <div class="prose">
+    <p>Plus haut, on a utilisé des réflectances comme 0,04 ou 0,45. Les fichiers Landsat ne les stockent pas ainsi. Pour gagner de la place, elles sont converties en entiers : au lieu de 0,45, le fichier contient <strong>23 636</strong>. On parle de <strong>DN</strong> (Digital Numbers, valeurs brutes).</p>
+    <p>La formule de l'USGS pour revenir à la réflectance :</p>
+    <pre><code>réflectance = DN × 0,0000275 − 0,2</code></pre>
+    <p>Si l'on saute cette conversion et calcule le NDVI sur les valeurs brutes, on pourrait penser que « c'est un rapport, donc ça ne change rien » — mais le <strong>décalage de −0,2</strong> fausse le rapport. La valeur calculée sur les DN vaut en réalité :</p>
+    <pre><code>NDVI non mis à l'échelle = (PIR − Rouge) / (PIR + Rouge + 0,4)</code></pre>
+    <p>Le 0,4 ajouté au dénominateur rend tous les NDVI trop faibles et les resserre. La comparaison ci-dessous se met à jour quand vous déplacez les curseurs plus haut :</p>
+  </div>
+  <div class="widget" id="w-scale">
+    <h4>Le même pixel, deux calculs</h4>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th>Rouge</th><th>PIR</th><th>NDVI</th></tr></thead>
+      <tbody>
+        <tr><td>Valeur brute du fichier (DN)</td><td class="num" id="dn-r"></td><td class="num" id="dn-n"></td><td class="num" id="dn-ndvi" style="color:var(--warn)"></td></tr>
+        <tr><td>Réflectance mise à l'échelle</td><td class="num" id="sr-r"></td><td class="num" id="sr-n"></td><td class="num" id="sr-ndvi" style="color:var(--accent);font-weight:600"></td></tr>
+      </tbody>
+    </table></div>
+    <div class="ramp"><span class="mk raw" id="sc-raw">brut</span><span class="mk" id="sc-ok">échelle</span></div>
+    <div class="ramp-ax"><span>−1</span><span>0</span><span>+1</span></div>
+  </div>
+  <div class="fix prose"><b>Conséquence :</b> un pixel de forêt saine vaut 0,84 après mise à l'échelle, mais environ 0,46 avec les valeurs brutes, ce qui ressemble à une « végétation clairsemée ». Dans ce script, la fonction <code>prepL8</code> applique la conversion à chaque image. C'est aussi pour cela que les paramètres de visualisation passent de <code>min: 7464, max: 12575</code> à <code>min: 0, max: 0.3</code>.</div>
+</section>
+
+<!-- ========== COMPOSITE ========== -->
+<section id="composite">
+  <div class="step-no">Étape 6</div>
+  <h2>Composite : réduire 400 images à une seule</h2>
+  <div class="prose">
+    <p>Pour afficher une seule image sur la carte, ou pour découper une zone (<code>clip</code>), il faut une image unique. On l'obtient en <strong>résumant les valeurs de chaque pixel dans le temps en une seule valeur</strong>. C'est ce qu'on appelle un composite.</p>
+    <p>Imaginons qu'on ait mesuré un pixel à 9 dates. Le masque a retiré la plupart des nuages, mais à deux dates un bord de nuage ou de la brume est passé à travers :</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-comp" viewBox="0 0 760 300" role="img" aria-label="Valeurs NDVI d'un pixel à neuf dates, avec la moyenne et la médiane"></svg></div>
+    <figcaption>Valeurs d'exemple. La moyenne est tirée vers le bas par les deux mauvaises mesures. La médiane prend la valeur du milieu de la liste triée et ignore les valeurs extrêmes.</figcaption>
+  </figure>
+  <pre><code>var image1 = landsat.median().clip(region);   <span class="cm">// median plus robuste que mean face aux extrêmes</span></code></pre>
+  <p class="prose">C'est pourquoi ce script utilise <code>median()</code> plutôt que <code>mean()</code>. On fait de même avant de classifier la collection NDVI : <code>var input = ndvi.median();</code></p>
+</section>
+
+<!-- ========== K-MEANS ========== -->
+<section id="kmeans">
+  <div class="step-no">Étape 7a · section 4 du script</div>
+  <h2>K-Means : regrouper les pixels par ressemblance</h2>
+  <div class="prose">
+    <p>Chaque pixel a maintenant une valeur de NDVI. On veut les répartir en groupes du type « très vert », « moyen », « faible », sans fixer nous-mêmes les limites. K-Means les apprend à partir des données. On parle de classification <strong>non supervisée</strong>, car on ne montre jamais d'exemple à l'ordinateur du genre « ce pixel est une forêt ».</p>
+    <p>L'algorithme est simple et répète deux étapes :</p>
+    <p><strong>1. Affecter :</strong> chaque pixel rejoint le centre le plus proche.<br>
+    <strong>2. Mettre à jour :</strong> chaque centre se déplace à la moyenne de son groupe.<br>
+    Il s'arrête quand les centres ne bougent plus.</p>
+  </div>
+  <div class="widget" id="w-km">
+    <h4>À vous : 80 pixels, 4 classes (le script utilise 6 classes et 5 000 pixels)</h4>
+    <div class="row">
+      <button type="button" id="km-step">Étape suivante</button>
+      <button type="button" id="km-run">Aller jusqu'au bout</button>
+      <button type="button" id="km-reset">Nouveau départ aléatoire</button>
+      <button type="button" id="km-sort" aria-pressed="false">Trier les numéros par NDVI</button>
+    </div>
+    <div class="fig" style="margin-top:12px;padding:6px;overflow-x:auto"><svg id="svg-km" viewBox="0 0 720 230" style="min-width:520px" role="img" aria-label="Visualisation de la classification K-Means"></svg></div>
+    <div id="km-status" style="font-size:0.9rem;color:var(--muted);margin-top:6px" aria-live="polite"></div>
+  </div>
+  <div class="prose">
+    <p><strong>Un piège important :</strong> K-Means numérote ses classes au hasard. « Classe 0 » ne veut pas dire NDVI le plus faible ; un groupe différent peut être 0 à chaque exécution. Cliquez plusieurs fois sur « Nouveau départ aléatoire » et regardez l'ordre des couleurs se mélanger. Associer une palette du vert clair au vert foncé à ces numéros arbitraires rend la carte difficile à lire.</p>
+    <p>Ce script calcule le NDVI moyen de chaque classe, les trie du plus faible au plus élevé, puis les renumérote (<code>remap</code>). Désormais, 0 correspond vraiment au NDVI le plus faible et 5 au plus élevé.</p>
+  </div>
+  <pre><code>var training  = input.sample({region: forests.geometry(), scale: 30, numPixels: 5000, seed: 42});
+var clusterer = ee.Clusterer.wekaKMeans(6).train(training);   <span class="cm">// apprendre sur 5 000 échantillons</span>
+var clustered = input.cluster(clusterer);                     <span class="cm">// appliquer à tous les pixels</span>
+<span class="cm">// ... NDVI moyen de chaque classe → tri → remap</span>
+var ranked = clustered.remap(order, ee.List.sequence(0, 5));</code></pre>
+  <p class="prose"><code>seed: 42</code> fige le tirage aléatoire : les mêmes 5 000 pixels sont choisis à chaque exécution, et le résultat ne change pas.</p>
+</section>
+
+<!-- ========== GRAPHIQUES ========== -->
+<section id="charts">
+  <div class="step-no">Étape 7b · section 5 du script</div>
+  <h2>Graphiques : comment le NDVI a-t-il évolué l'été ?</h2>
+  <div class="prose">
+    <p>Un graphique a besoin d'une valeur par mois. On construit donc deux boucles imbriquées : 12 ans × 3 mois d'été (juin, juillet, août) = <strong>36 cases</strong>. Chaque case contient la moyenne des images dégagées prises ce mois-là.</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-grid" viewBox="0 0 760 210" role="img" aria-label="Grille de 36 cases : 12 ans par 3 mois"></svg></div>
+    <figcaption>Illustration. Lors d'un été nuageux, un mois peut n'avoir aucune image dégagée. Ce script retire les mois vides avec un filtre <code>n_images &gt; 0</code>. Les mois vides dépendent des données réelles.</figcaption>
+  </figure>
+  <h3>Réducteurs : transformer des milliers de pixels en un nombre</h3>
+  <div class="prose">
+    <p>Chaque image mensuelle couvre notre zone avec des milliers de pixels. Pour un point du graphique, il faut les résumer. L'outil qui fait cela s'appelle un <strong>réducteur</strong> (reducer) :</p>
+  </div>
+  <figure>
+    <div class="fig wide"><svg id="svg-red" viewBox="0 0 760 230" role="img" aria-label="Une zone de 16 pixels résumée par la moyenne et par le maximum"></svg></div>
+    <figcaption>Les mêmes 16 pixels, deux réducteurs. Utiliser <code>max()</code> alors que le titre dit « Average » serait incohérent : le maximum montre le seul pixel le plus vert et ne dit rien de la zone dans son ensemble. Ce script utilise <code>mean()</code>.</figcaption>
+  </figure>
+  <pre><code>ui.Chart.image.series({
+  imageCollection: summerNDVI,   <span class="cm">// 36 images mensuelles (ou moins)</span>
+  region: region,
+  reducer: ee.Reducer.mean(),    <span class="cm">// moyenne de la zone pour chaque mois</span>
+  scale: 100,                    <span class="cm">// résolution de calcul (m) : plus grand = plus rapide mais plus grossier</span>
+  xProperty: 'system:time_start' <span class="cm">// axe x = date</span>
+});</code></pre>
+  <p class="prose"><code>seriesByRegion</code> fait la même chose pour chacun des trois comtés et trace une courbe par comté. <code>seriesProperty: 'NAME'</code> donne à chaque courbe le nom du comté.</p>
+  <h3>Légendes</h3>
+  <p class="prose">Le code des légendes relève uniquement de l'interface : il ouvre un panneau et ajoute une ligne par couleur, composée d'une case colorée et d'une étiquette. Les deux légendes sont produites avec une seule fonction <code>makeLegend(titre, couleurs, noms)</code>.</p>
+</section>
+
+<!-- ========== EXPORT ========== -->
+<section id="export">
+  <div class="step-no">Étape 8 · section 7 du script</div>
+  <h2>Export et QGIS : récupérer les résultats sur son ordinateur</h2>
+  <div class="prose">
+    <p>Tout ce que vous voyez dans GEE vit sur le serveur. Pour l'obtenir sous forme de fichier, on utilise <code>Export</code>. Un export crée une « tâche », qui ne démarre pas toute seule :</p>
+  </div>
+  <ol class="flow">
+    <li><div><strong>Exécuter le script.</strong> Des tâches orange apparaissent dans l'onglet <em>Tasks</em> à droite.</div></li>
+    <li><div><strong>Cliquer sur Run pour chaque tâche.</strong> Toute la zone est calculée à ce moment-là ; cela peut prendre quelques minutes.</div></li>
+    <li><div><strong>Google Drive → dossier d'export.</strong> Le NDVI et les classes arrivent en GeoTIFF, les comtés en Shapefile.</div></li>
+    <li><div><strong>Charger dans QGIS.</strong> Couche → Ajouter une couche → raster / vecteur.</div></li>
+    <li><div><strong>Découper.</strong> Boîte à outils de traitements → <em>Découper un raster selon une couche de masque</em>, avec <code>forests</code> comme masque.</div></li>
+    <li><div><strong>Symboliser.</strong> Clic droit sur la couche → <em>Propriétés</em> → Symbologie → Pseudo-couleur à bande unique, rampe de verts.</div></li>
+  </ol>
+  <div class="fix prose"><b>Astuces d'export :</b> (1) Passer une seule image — ce script exporte <code>input</code> (le NDVI médian), pas toute la collection. (2) Dans QGIS, utiliser <em>Properties</em> pour la symbologie (pas « Processing »). (3) Au découpage, éviter 0 comme NoData — c'est un NDVI valide ; utiliser par exemple −9999.</div>
+  <div class="fix prose"><b>Astuce fréquente :</b> <code>Permission denied to create object in folder</code>. GEE trouve le dossier Drive par son <em>nom</em>. Si un dossier partagé en lecture seule porte le même nom, GEE essaie d'y écrire et échoue. Choisissez un nom de dossier unique.</div>
+</section>
+
+<!-- ========== GLOSSAIRE ========== -->
+<section id="glossary">
+  <h2>Glossaire</h2>
+  <dl class="gl">
+    <dt>Pixel</dt><dd>Le plus petit carré d'une image. 30 × 30 m pour Landsat.</dd>
+    <dt>Bande</dt><dd>Une couche qui mesure un type de lumière (rouge, PIR…).</dd>
+    <dt>Réflectance</dt><dd>La part de la lumière reçue qu'une surface renvoie (0–1).</dd>
+    <dt>DN</dt><dd>L'entier brut stocké dans le fichier ; converti en réflectance par le facteur d'échelle.</dd>
+    <dt>Image</dt><dd>Une image unique (elle peut contenir plusieurs bandes).</dd>
+    <dt>ImageCollection</dt><dd>Une pile d'images, en général le même lieu à différentes dates.</dd>
+    <dt>Feature / FeatureCollection</dt><dd>Une forme et sa ligne d'attributs / une table de celles-ci (une couche vecteur).</dd>
+    <dt>filterDate, filterBounds</dt><dd>Filtrent une pile par date et par emprise.</dd>
+    <dt>map()</dt><dd>Applique une fonction à chaque élément d'une collection.</dd>
+    <dt>Masque</dt><dd>Une couche 1/0 qui indique quels pixels utiliser.</dd>
+    <dt>Bit</dt><dd>Un chiffre d'un nombre binaire ; dans QA_PIXEL, chaque bit est une réponse oui/non.</dd>
+    <dt>NDVI</dt><dd>(PIR − Rouge) / (PIR + Rouge) ; indice de végétation compris entre −1 et +1.</dd>
+    <dt>Composite</dt><dd>Une image unique qui résume les valeurs dans le temps, pixel par pixel.</dd>
+    <dt>Réducteur</dt><dd>Une opération qui transforme plusieurs valeurs en une : moyenne, médiane, maximum…</dd>
+    <dt>K-Means</dt><dd>Méthode non supervisée qui répartit les pixels en k groupes selon leur ressemblance.</dd>
+    <dt>scale</dt><dd>La taille de pixel (en mètres) à laquelle un calcul est effectué.</dd>
+    <dt>Export</dt><dd>Une tâche qui écrit les résultats dans Drive sous forme de fichiers.</dd>
+  </dl>
+</section>
+<footer class="prose" style="margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--line);font-size:0.85rem;color:var(--muted)">
+  D'après l'atelier Women in GIS « Intro to Google Earth Engine – Utilizing GEE to Analyze NDVI » (octobre 2026). Raffinements du script, guide et documentation : Irem Cagbayir. Données : USGS Landsat 8 Collection 2 Level-2, US Census Bureau TIGER/Line 2018.
+</footer>
+</div>
+
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text !== undefined) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  function $(id) { return document.getElementById(id); }
+  function fmt(x, d) { return (x < 0 ? "−" : "") + Math.abs(x).toFixed(d === undefined ? 2 : d); }
+  function arrow(svg, x1, y1, x2, y2, cls) {
+    el("line", {x1: x1, y1: y1, x2: x2, y2: y2, "class": cls || "ln-fg", "stroke-width": 1.6}, svg);
+    var a = Math.atan2(y2 - y1, x2 - x1), s = 7;
+    el("path", {d: "M" + x2 + "," + y2 + " L" + (x2 - s * Math.cos(a - 0.45)) + "," + (y2 - s * Math.sin(a - 0.45)) +
+      " L" + (x2 - s * Math.cos(a + 0.45)) + "," + (y2 - s * Math.sin(a + 0.45)) + " Z", "class": cls === "ln-acc" ? "t-accent" : "t-muted"}, svg);
+  }
+
+  /* ---------- Pipeline ---------- */
+  (function () {
+    var s = $("svg-pipeline");
+    var steps = [
+      ["Géométries", "ee.Geometry · TIGER", "geometry"],
+      ["Collection + filtres", "filterDate · filterBounds", "collection"],
+      ["Masque nuages", "QA_PIXEL bits 3 et 4", "clouds"],
+      ["Facteur d'échelle", "× 0.0000275 − 0.2", "scale"],
+      ["NDVI", "normalizedDifference", "ndvi"],
+      ["Composite", "median()", "composite"],
+      ["Classes + graphiques", "wekaKMeans · ui.Chart", "kmeans"],
+      ["Export → QGIS", "Export.image.toDrive", "export"]
+    ];
+    var xs = [20, 220, 420, 620, 620, 420, 220, 20];
+    steps.forEach(function (st, i) {
+      var y = i < 4 ? 30 : 150;
+      var a = el("a", {href: "#" + st[2]}, s);
+      el("rect", {x: xs[i], y: y, width: 160, height: 70, rx: 8, "class": i === 3 || i === 4 ? "box-acc" : "box"}, a);
+      el("text", {x: xs[i] + 12, y: y + 22, "class": "t-accent mono", "font-size": 11}, a, String(i + 1));
+      el("text", {x: xs[i] + 28, y: y + 22, "class": "t-fg", "font-size": 13.5, "font-weight": 600}, a, st[0]);
+      el("text", {x: xs[i] + 12, y: y + 48, "class": "t-muted mono", "font-size": 10.5}, a, st[1]);
+    });
+    arrow(s, 182, 65, 216, 65); arrow(s, 382, 65, 416, 65); arrow(s, 582, 65, 616, 65);
+    arrow(s, 700, 102, 700, 146);
+    arrow(s, 618, 185, 584, 185); arrow(s, 418, 185, 384, 185); arrow(s, 218, 185, 184, 185);
+  })();
+
+  /* ---------- Bands ---------- */
+  (function () {
+    var s = $("svg-bands");
+    var layers = [["SR_B2 · Bleu", 0.04], ["SR_B3 · Vert", 0.07], ["SR_B4 · Rouge", 0.05], ["SR_B5 · PIR", 0.45]];
+    var cell = 22, n = 5, ox = 60, oy = 160;
+    var seed = 7; function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    for (var L = 0; L < layers.length; L++) {
+      var x0 = ox + L * 30, y0 = oy - L * 26;
+      var g = el("g", {}, s);
+      for (var r = 0; r < n; r++) for (var c = 0; c < n; c++) {
+        var hit = r === 2 && c === 2;
+        var base = L === 3 ? 0.55 : 0.18;
+        el("rect", {x: x0 + c * cell, y: y0 + r * cell, width: cell, height: cell,
+          "class": hit ? "box-acc" : "", fill: hit ? "" : "var(--accent)",
+          "fill-opacity": hit ? 1 : (base + rnd() * 0.35).toFixed(2), stroke: "var(--surface)", "stroke-width": 1}, g);
+      }
+      el("rect", {x: x0, y: y0, width: n * cell, height: n * cell, fill: "none", "class": "ln-fg", "stroke-width": 1}, g);
+    }
+    // labels
+    for (var L2 = 0; L2 < layers.length; L2++) {
+      var lx = ox + L2 * 30 + n * cell + 8, ly = oy - L2 * 26 + 12;
+      el("text", {x: lx, y: ly, "class": "t-muted", "font-size": 11}, s, layers[L2][0]);
+    }
+    // value panel
+    var px = 430, py = 60;
+    el("text", {x: px, y: py, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "Valeurs du pixel mis en évidence");
+    el("text", {x: px, y: py + 20, "class": "t-muted", "font-size": 12}, s, "(exemple : un pixel de forêt saine)");
+    layers.forEach(function (ly, i) {
+      var y = py + 52 + i * 34;
+      el("text", {x: px, y: y + 12, "class": "t-fg mono", "font-size": 12}, s, ly[0].split(" · ")[0]);
+      el("rect", {x: px + 70, y: y, width: 200, height: 16, rx: 3, "class": "box"}, s);
+      el("rect", {x: px + 70, y: y, width: Math.max(2, ly[1] / 0.5 * 200), height: 16, rx: 3, "class": i === 3 ? "t-accent" : "t-soil"}, s);
+      el("text", {x: px + 280, y: y + 13, "class": "t-fg mono", "font-size": 12}, s, ly[1].toFixed(2));
+    });
+    el("text", {x: px, y: py + 205, "class": "t-muted", "font-size": 11.5}, s, "Rouge très faible, PIR très élevé : la signature d'une végétation saine.");
+  })();
+
+  /* ---------- Geometry ---------- */
+  (function () {
+    var s = $("svg-geom");
+    // panel 1: point
+    el("rect", {x: 10, y: 10, width: 230, height: 210, rx: 8, "class": "box"}, s);
+    el("text", {x: 24, y: 36, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "Point");
+    el("circle", {cx: 125, cy: 120, r: 7, "class": "t-accent"}, s);
+    el("text", {x: 125, y: 150, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, "[-70.7029, 45.3211]");
+    el("text", {x: 24, y: 205, "class": "t-muted", "font-size": 11}, s, "Un seul lieu : longitude, latitude");
+    // panel 2: polygon
+    el("rect", {x: 265, y: 10, width: 230, height: 210, rx: 8, "class": "box"}, s);
+    el("text", {x: 279, y: 36, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "Polygone");
+    var P = [[320, 70], [320, 160], [440, 160], [440, 70]];
+    el("polygon", {points: P.map(function (p) { return p.join(","); }).join(" "), fill: "var(--accent)", "fill-opacity": 0.15, "class": "ln-acc", "stroke-width": 2}, s);
+    P.forEach(function (p, i) {
+      el("circle", {cx: p[0], cy: p[1], r: 5, "class": "t-accent"}, s);
+      el("text", {x: p[0] + (i < 2 ? -10 : 10), y: p[1] + (i % 3 === 0 ? -8 : 18), "text-anchor": i < 2 ? "end" : "start", "class": "t-fg mono", "font-size": 11}, s, "pt" + (i + 1));
+    });
+    el("text", {x: 279, y: 205, "class": "t-muted", "font-size": 11}, s, "Liste de sommets → surface fermée");
+    // panel 3: feature collection
+    el("rect", {x: 520, y: 10, width: 230, height: 210, rx: 8, "class": "box"}, s);
+    el("text", {x: 534, y: 36, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "FeatureCollection");
+    var shapes = [
+      ["M560,70 L610,62 L622,110 L575,122 Z", "Essex"],
+      ["M622,58 L680,50 L690,120 L626,112 Z", "Coos"],
+      ["M692,62 L735,70 L728,130 L694,124 Z", "Franklin"]
+    ];
+    shapes.forEach(function (sh) { el("path", {d: sh[0], fill: "var(--accent)", "fill-opacity": 0.18, "class": "ln-acc", "stroke-width": 1.5}, s); });
+    var rows = [["NAME", "STATEFP"], ["Essex", "50"], ["Coos", "33"], ["Franklin", "23"]];
+    rows.forEach(function (r, i) {
+      var y = 150 + i * 16;
+      el("text", {x: 545, y: y, "class": i ? "t-fg mono" : "t-muted mono", "font-size": 10.5}, s, r[0]);
+      el("text", {x: 640, y: y, "class": i ? "t-fg mono" : "t-muted mono", "font-size": 10.5}, s, r[1]);
+    });
+  })();
+
+  /* ---------- Collection ---------- */
+  (function () {
+    var s = $("svg-coll");
+    el("text", {x: 20, y: 28, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "filterDate : fenêtre temporelle");
+    var x0 = 30, x1 = 350, y = 150;
+    function X(yr) { return x0 + (yr - 2013) / (2026.9 - 2013) * (x1 - x0); }
+    el("rect", {x: X(2014), y: 50, width: X(2026) - X(2014), height: 110, rx: 4, fill: "var(--accent)", "fill-opacity": 0.12, "class": "ln-acc", "stroke-dasharray": "4 3"}, s);
+    for (var t = 2013.3; t < 2026.9; t += 16 / 365.25) {
+      var inn = t >= 2014 && t < 2026;
+      el("rect", {x: X(t) - 0.7, y: y - 60, width: 1.4, height: 55, "class": inn ? "t-accent" : "t-muted", "fill-opacity": inn ? 0.9 : 0.35}, s);
+    }
+    el("line", {x1: x0, y1: y, x2: x1, y2: y, "class": "ln-fg"}, s);
+    [2013, 2016, 2019, 2022, 2025].forEach(function (yr) {
+      el("line", {x1: X(yr), y1: y, x2: X(yr), y2: y + 5, "class": "ln-fg"}, s);
+      el("text", {x: X(yr), y: y + 19, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, String(yr));
+    });
+    el("text", {x: X(2014) + 4, y: 64, "class": "t-accent mono", "font-size": 10.5}, s, "2014-01-01 → 2026-01-01");
+    el("text", {x: 30, y: 200, "class": "t-muted", "font-size": 11.5}, s, "Chaque trait est un passage (tous les 16 jours).");
+    el("text", {x: 30, y: 218, "class": "t-muted", "font-size": 11.5}, s, "Les verts sont gardés, les gris écartés.");
+
+    // filterBounds
+    var bx = 400;
+    el("text", {x: bx, y: 28, "class": "t-fg", "font-size": 14, "font-weight": 600}, s, "filterBounds : filtre spatial");
+    var counties = "M540,140 L600,128 L640,150 L690,138 L700,190 L640,205 L585,198 L548,185 Z";
+    var tiles = [];
+    for (var r = 0; r < 3; r++) for (var c = 0; c < 4; c++) {
+      var tx = bx + 10 + c * 85 + r * 14, ty = 55 + r * 75;
+      var hit = (r >= 1 && c >= 1 && c <= 3) || (r === 2 && c === 1);
+      tiles.push([tx, ty, hit]);
+    }
+    tiles.forEach(function (t) {
+      el("rect", {x: t[0], y: t[1], width: 92, height: 82, transform: "rotate(-8 " + (t[0] + 46) + " " + (t[1] + 41) + ")",
+        fill: t[2] ? "var(--accent)" : "none", "fill-opacity": t[2] ? 0.1 : 0, "class": t[2] ? "ln-acc" : "ln", "stroke-width": 1.2}, s);
+    });
+    el("path", {d: counties, "class": "t-soil", "fill-opacity": 0.55}, s);
+    el("text", {x: 618, y: 175, "text-anchor": "middle", "class": "t-fg", "font-size": 11.5, "font-weight": 600}, s, "comtés");
+    el("text", {x: bx, y: 290, "class": "t-muted", "font-size": 11.5}, s, "Les scènes encadrées en vert touchent les comtés : elles sont gardées.");
+  })();
+
+  /* ---------- map() ---------- */
+  (function () {
+    var s = $("svg-map");
+    function stack(x, label, cls) {
+      for (var i = 4; i >= 0; i--) {
+        el("rect", {x: x + i * 8, y: 40 + i * 8, width: 90, height: 70, rx: 4, "class": cls}, s);
+      }
+      el("text", {x: x + 61, y: 170, "text-anchor": "middle", "class": "t-fg", "font-size": 12.5, "font-weight": 600}, s, label);
+    }
+    stack(30, "images brutes (N)", "box");
+    // cloud blobs on input
+    el("ellipse", {cx: 75, cy: 70, rx: 20, ry: 10, "class": "t-muted", "fill-opacity": 0.35}, s);
+    arrow(s, 168, 95, 268, 95);
+    el("rect", {x: 275, y: 55, width: 210, height: 80, rx: 10, "class": "box-acc"}, s);
+    el("text", {x: 380, y: 85, "text-anchor": "middle", "class": "t-fg mono", "font-size": 13}, s, "function prepL8(image)");
+    el("text", {x: 380, y: 108, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5}, s, "masquer + mettre à l'échelle");
+    el("text", {x: 380, y: 125, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5}, s, "recette pour une seule image");
+    arrow(s, 492, 95, 592, 95, "ln-acc");
+    stack(600, "images préparées (N)", "box-acc");
+    el("text", {x: 380, y: 190, "text-anchor": "middle", "class": "t-muted mono", "font-size": 11.5}, s, ".map(prepL8)  → la recette est appliquée à chaque image de la pile");
+  })();
+
+  /* ---------- QA bits ---------- */
+  (function () {
+    var inp = $("qa-in"), bitsEl = $("qa-bits"), idxEl = $("qa-idx");
+    for (var b = 15; b >= 0; b--) {
+      var d = document.createElement("div"); d.className = "bit" + (b === 3 || b === 4 ? " key" : ""); d.id = "bit" + b; bitsEl.appendChild(d);
+      var i = document.createElement("div"); i.textContent = b; idxEl.appendChild(i);
+    }
+    function upd() {
+      var v = Math.max(0, Math.min(65535, parseInt(inp.value, 10) || 0));
+      for (var b = 0; b < 16; b++) {
+        var on = (v >> b) & 1, d = $("bit" + b);
+        d.textContent = on; d.classList.toggle("on", !!on);
+      }
+      var c = v & 8, sh = v & 16;
+      $("qa-c").textContent = c; $("qa-s").textContent = sh;
+      var keep = c === 0 && sh === 0, ver = $("qa-v");
+      ver.className = "verdict " + (keep ? "keep" : "drop");
+      ver.textContent = keep ? "Les deux tests valent 0 → masque = 1, le pixel est gardé." :
+        (c ? "Bit nuage allumé" : "Bit ombre allumé") + " → masque = 0, le pixel est exclu de tous les calculs.";
+    }
+    inp.addEventListener("input", upd);
+    document.querySelectorAll("[data-qa]").forEach(function (btn) {
+      btn.addEventListener("click", function () { inp.value = btn.getAttribute("data-qa"); upd(); });
+    });
+    upd();
+  })();
+
+  /* ---------- Spectrum ---------- */
+  (function () {
+    var s = $("svg-spec");
+    var L = 70, R = 730, T = 25, B = 280;
+    function X(w) { return L + (w - 0.4) / 0.6 * (R - L); }
+    function Y(r) { return B - r / 0.55 * (B - T); }
+    var bands = [["B2", 0.452, 0.512, "blue"], ["B3", 0.533, 0.590, "green"], ["B4", 0.636, 0.673, "red"], ["B5", 0.851, 0.879, "NIR"]];
+    bands.forEach(function (b) {
+      var key = b[0] === "B4" || b[0] === "B5";
+      el("rect", {x: X(b[1]), y: T, width: X(b[2]) - X(b[1]), height: B - T, fill: key ? "var(--accent)" : "var(--muted)", "fill-opacity": key ? 0.16 : 0.08}, s);
+      el("text", {x: (X(b[1]) + X(b[2])) / 2, y: T - 6, "text-anchor": "middle", "class": key ? "t-accent mono" : "t-muted mono", "font-size": 11, "font-weight": key ? 600 : 400}, s, b[0]);
+    });
+    for (var r = 0; r <= 0.5; r += 0.1) {
+      el("line", {x1: L, y1: Y(r), x2: R, y2: Y(r), "class": "ln", "stroke-width": 0.8}, s);
+      el("text", {x: L - 8, y: Y(r) + 4, "text-anchor": "end", "class": "t-muted mono", "font-size": 10.5}, s, r.toFixed(1));
+    }
+    [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].forEach(function (w) {
+      el("text", {x: X(w), y: B + 18, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, w.toFixed(1));
+    });
+    el("text", {x: (L + R) / 2, y: B + 40, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5}, s, "Longueur d'onde (µm) · visible 0,4–0,7, infrarouge au-delà");
+    el("text", {x: 18, y: (T + B) / 2, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5, transform: "rotate(-90 18 " + (T + B) / 2 + ")"}, s, "Réflectance");
+    var curves = [
+      ["Végétation saine", "var(--c4)", [[0.40, 0.03], [0.45, 0.04], [0.50, 0.05], [0.55, 0.10], [0.60, 0.06], [0.65, 0.04], [0.68, 0.04], [0.70, 0.10], [0.72, 0.30], [0.75, 0.44], [0.80, 0.47], [0.90, 0.48], [1.00, 0.47]]],
+      ["Sol nu", "var(--soil)", [[0.40, 0.08], [0.50, 0.12], [0.60, 0.18], [0.70, 0.23], [0.80, 0.27], [0.90, 0.30], [1.00, 0.32]]],
+      ["Eau", "var(--water)", [[0.40, 0.07], [0.50, 0.06], [0.60, 0.04], [0.70, 0.02], [0.80, 0.01], [0.90, 0.005], [1.00, 0.0]]]
+    ];
+    curves.forEach(function (c, i) {
+      var d = c[2].map(function (p, j) { return (j ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1); }).join(" ");
+      el("path", {d: d, fill: "none", stroke: c[1], "stroke-width": 2.6, "stroke-linejoin": "round"}, s);
+      var last = c[2][c[2].length - 1];
+      el("rect", {x: 90, y: 40 + i * 20, width: 14, height: 4, fill: c[1]}, s);
+      el("text", {x: 110, y: 45 + i * 20, "class": "t-fg", "font-size": 11.5}, s, c[0]);
+    });
+    el("text", {x: X(0.655), y: Y(0.04) + 20, "text-anchor": "middle", "class": "t-fg", "font-size": 11}, s, "absorbe le rouge");
+    el("text", {x: X(0.865), y: Y(0.48) - 10, "text-anchor": "middle", "class": "t-fg", "font-size": 11}, s, "réfléchit le PIR");
+  })();
+
+  /* ---------- NDVI + scale widget ---------- */
+  (function () {
+    var red = $("r-red"), nir = $("r-nir");
+    var presets = [["Forêt saine", 0.04, 0.45], ["Prairie", 0.08, 0.30], ["Zone sèche / brûlée", 0.15, 0.20], ["Sol nu", 0.20, 0.26], ["Eau", 0.05, 0.02], ["Nuage", 0.45, 0.48]];
+    var box = $("ndvi-presets");
+    presets.forEach(function (p) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = p[0];
+      b.addEventListener("click", function () { red.value = p[1]; nir.value = p[2]; upd(); });
+      box.appendChild(b);
+    });
+    function pos(v) { return ((v + 1) / 2 * 100).toFixed(1) + "%"; }
+    function interp(v) {
+      if (v < 0) return "Eau (ou neige)";
+      if (v < 0.15) return "Pas de végétation : sol, roche, nuage";
+      if (v < 0.35) return "Végétation clairsemée / stressée";
+      if (v < 0.6) return "Végétation moyenne";
+      return "Végétation dense et saine";
+    }
+    function dn(r) { return (r + 0.2) / 0.0000275; }
+    function upd() {
+      var r = parseFloat(red.value), n = parseFloat(nir.value);
+      $("o-red").textContent = r.toFixed(2); $("o-nir").textContent = n.toFixed(2);
+      var v = (n + r) === 0 ? 0 : (n - r) / (n + r);
+      $("ndvi-calc").textContent = "(" + n.toFixed(2) + " − " + r.toFixed(2) + ") / (" + n.toFixed(2) + " + " + r.toFixed(2) + ")";
+      $("ndvi-val").textContent = fmt(v);
+      $("ndvi-txt").textContent = interp(v);
+      $("ndvi-mk").style.left = pos(v); $("ndvi-mk").textContent = fmt(v);
+      // scale section
+      var dr = dn(r), dnn = dn(n), raw = (dnn - dr) / (dnn + dr);
+      $("dn-r").textContent = Math.round(dr).toLocaleString("fr-FR");
+      $("dn-n").textContent = Math.round(dnn).toLocaleString("fr-FR");
+      $("dn-ndvi").textContent = fmt(raw) + "  (brut)";
+      $("sr-r").textContent = r.toFixed(2); $("sr-n").textContent = n.toFixed(2);
+      $("sr-ndvi").textContent = fmt(v) + "  (échelle)";
+      $("sc-raw").style.left = pos(raw); $("sc-raw").textContent = "brut " + fmt(raw);
+      $("sc-ok").style.left = pos(v); $("sc-ok").textContent = "échelle " + fmt(v);
+    }
+    red.addEventListener("input", upd); nir.addEventListener("input", upd);
+    upd();
+  })();
+
+  /* ---------- Composite ---------- */
+  (function () {
+    var s = $("svg-comp");
+    var vals = [0.78, 0.81, 0.12, 0.80, 0.83, 0.79, 0.05, 0.82, 0.80];
+    var dates = ["3 juin", "19 juin", "5 juil.", "21 juil.", "6 août", "22 août", "7 sept.", "23 sept.", "9 oct."];
+    var mean = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    var srt = vals.slice().sort(function (a, b) { return a - b; }), med = srt[Math.floor(srt.length / 2)];
+    var L = 60, R = 560, T = 25, B = 245;
+    function Y(v) { return B - v * (B - T); }
+    function X(i) { return L + 20 + i * (R - L - 40) / (vals.length - 1); }
+    [0, 0.2, 0.4, 0.6, 0.8, 1].forEach(function (g) {
+      el("line", {x1: L, y1: Y(g), x2: R, y2: Y(g), "class": "ln", "stroke-width": 0.8}, s);
+      el("text", {x: L - 8, y: Y(g) + 4, "text-anchor": "end", "class": "t-muted mono", "font-size": 10.5}, s, g.toFixed(1));
+    });
+    el("line", {x1: L, y1: Y(mean), x2: R, y2: Y(mean), "class": "ln-warn", "stroke-width": 2, "stroke-dasharray": "6 4"}, s);
+    el("line", {x1: L, y1: Y(med), x2: R, y2: Y(med), "class": "ln-acc", "stroke-width": 2.4}, s);
+    vals.forEach(function (v, i) {
+      var bad = v < 0.3;
+      el("circle", {cx: X(i), cy: Y(v), r: 6, "class": bad ? "t-warn" : "t-accent"}, s);
+      el("text", {x: X(i), y: B + 18, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10}, s, dates[i]);
+      if (bad) el("text", {x: X(i), y: Y(v) - 12, "text-anchor": "middle", "class": "t-warn", "font-size": 10.5}, s, "résidu de nuage");
+    });
+    el("text", {x: 580, y: Y(med) + 4, "class": "t-accent", "font-size": 12.5, "font-weight": 600}, s, "Médiane = " + fmt(med));
+    el("text", {x: 580, y: Y(mean) + 4, "class": "t-warn", "font-size": 12.5, "font-weight": 600}, s, "Moyenne = " + fmt(mean));
+    el("text", {x: 580, y: Y(med) + 24, "class": "t-muted", "font-size": 11}, s, "reflète la vraie forêt");
+    el("text", {x: 580, y: Y(mean) + 24, "class": "t-muted", "font-size": 11}, s, "tirée vers le bas par deux mauvaises mesures");
+    el("text", {x: 18, y: (T + B) / 2, "text-anchor": "middle", "class": "t-muted", "font-size": 11.5, transform: "rotate(-90 18 " + (T + B) / 2 + ")"}, s, "NDVI");
+  })();
+
+  /* ---------- K-Means ---------- */
+  (function () {
+    var s = $("svg-km");
+    var W = 720, L = 30, R = 690, xmin = -0.4, xmax = 1.0;
+    function X(v) { return L + (v - xmin) / (xmax - xmin) * (R - L); }
+    var ramp = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)"];
+    function mul(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+    var rng = mul(11);
+    function gauss(r) { var u = r() || 1e-9, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+    var groups = [[-0.15, 8], [0.18, 14], [0.5, 22], [0.8, 36]], pts = [];
+    groups.forEach(function (g) { for (var i = 0; i < g[1]; i++) pts.push({v: Math.max(-0.35, Math.min(0.97, g[0] + gauss(rng) * 0.06)), y: 70 + rng() * 110, c: -1}); });
+    var K = 4, centers, step, sorted = false, initSeed = 3, done = false;
+    function reset() {
+      var r = mul(initSeed++), idx = [];
+      while (idx.length < K) { var k = Math.floor(r() * pts.length); if (idx.indexOf(k) < 0) idx.push(k); }
+      centers = idx.map(function (k) { return pts[k].v; });
+      pts.forEach(function (p) { p.c = -1; }); step = 0; done = false; draw();
+    }
+    function iterate() {
+      var changed = 0;
+      pts.forEach(function (p) {
+        var best = 0, bd = 9;
+        centers.forEach(function (c, j) { var d = Math.abs(p.v - c); if (d < bd) { bd = d; best = j; } });
+        if (p.c !== best) { changed++; p.c = best; }
+      });
+      centers = centers.map(function (c, j) {
+        var m = pts.filter(function (p) { return p.c === j; });
+        return m.length ? m.reduce(function (a, p) { return a + p.v; }, 0) / m.length : c;
+      });
+      step++; if (changed === 0) done = true; return changed;
+    }
+    function rankOf() {
+      var order = centers.map(function (c, j) { return [c, j]; }).sort(function (a, b) { return a[0] - b[0]; });
+      var rk = []; order.forEach(function (o, i) { rk[o[1]] = i; }); return rk;
+    }
+    function draw(changed) {
+      while (s.firstChild) s.removeChild(s.firstChild);
+      var rk = rankOf();
+      el("line", {x1: L, y1: 195, x2: R, y2: 195, "class": "ln-fg"}, s);
+      [-0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.0].forEach(function (t) {
+        el("line", {x1: X(t), y1: 195, x2: X(t), y2: 200, "class": "ln-fg"}, s);
+        el("text", {x: X(t), y: 215, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, t.toFixed(1));
+      });
+      el("text", {x: R, y: 228, "text-anchor": "end", "class": "t-muted", "font-size": 10.5}, s, "NDVI");
+      pts.forEach(function (p) {
+        var col = p.c < 0 ? "var(--muted)" : ramp[sorted ? rk[p.c] : p.c];
+        el("circle", {cx: X(p.v), cy: p.y, r: 5, fill: col, "fill-opacity": p.c < 0 ? 0.5 : 0.95}, s);
+      });
+      centers.forEach(function (c, j) {
+        var col = ramp[sorted ? rk[j] : j];
+        el("line", {x1: X(c), y1: 40, x2: X(c), y2: 190, stroke: col, "stroke-width": 2, "stroke-dasharray": "5 3"}, s);
+        el("rect", {x: X(c) - 30, y: 14, width: 60, height: 22, rx: 4, fill: col}, s);
+        el("text", {x: X(c), y: 29, "text-anchor": "middle", "font-size": 11.5, "font-weight": 600, fill: "#10160f"}, s, "classe " + (sorted ? rk[j] : j));
+      });
+      var st = "Étape " + step + (step === 0 ? " · centres tirés au hasard, aucun pixel affecté." :
+        (done ? " · les centres ne bougent plus : l'algorithme a convergé." : " · " + changed + " pixels ont changé de classe à cette étape."));
+      if (sorted) st += " Numéros triés par NDVI : 0 est le plus faible.";
+      else if (step > 0) st += " Numéros arbitraires : l'ordre des couleurs peut ne pas suivre celui du NDVI.";
+      $("km-status").textContent = st;
+    }
+    $("km-step").addEventListener("click", function () { if (!done) draw(iterate()); });
+    $("km-run").addEventListener("click", function () { var c = 0, g = 0; while (!done && g++ < 50) c = iterate(); draw(c); });
+    $("km-reset").addEventListener("click", reset);
+    $("km-sort").addEventListener("click", function () { sorted = !sorted; this.setAttribute("aria-pressed", sorted); draw(0); });
+    reset();
+  })();
+
+  /* ---------- Year x month grid ---------- */
+  (function () {
+    var s = $("svg-grid");
+    var months = ["Juin", "Juil.", "Août"], empty = {"2015-0": 1, "2019-2": 1, "2023-1": 1};
+    var L = 60, cw = 54, ch = 40, T = 30;
+    for (var y = 0; y < 12; y++) {
+      var yr = 2014 + y;
+      el("text", {x: L + y * cw + cw / 2 - 2, y: T - 10, "text-anchor": "middle", "class": "t-muted mono", "font-size": 10.5}, s, String(yr));
+      for (var m = 0; m < 3; m++) {
+        var e = empty[yr + "-" + m];
+        el("rect", {x: L + y * cw, y: T + m * ch, width: cw - 4, height: ch - 4, rx: 4,
+          fill: e ? "none" : "var(--accent)", "fill-opacity": e ? 0 : 0.22 + m * 0.18, "class": e ? "ln-warn" : "", "stroke-dasharray": e ? "4 3" : ""}, s);
+        if (e) el("text", {x: L + y * cw + (cw - 4) / 2, y: T + m * ch + 23, "text-anchor": "middle", "class": "t-warn", "font-size": 10}, s, "vide");
+      }
+    }
+    months.forEach(function (mo, m) { el("text", {x: L - 10, y: T + m * ch + 22, "text-anchor": "end", "class": "t-fg", "font-size": 11.5}, s, mo); });
+    el("text", {x: L, y: T + 3 * ch + 24, "class": "t-muted", "font-size": 11.5}, s, "Chaque case = moyenne par pixel des images dégagées du mois (une image NDVI).");
+    el("text", {x: L, y: T + 3 * ch + 42, "class": "t-muted", "font-size": 11.5}, s, "12 ans × 3 mois = 36 cases → 36 points sur le graphique (moins une fois les mois vides retirés).");
+  })();
+
+  /* ---------- Reducer ---------- */
+  (function () {
+    var s = $("svg-red");
+    var v = [0.82, 0.79, 0.85, 0.88, 0.76, 0.81, 0.84, 0.80, 0.42, 0.55, 0.78, 0.83, 0.12, 0.35, 0.71, 0.77];
+    var mean = v.reduce(function (a, b) { return a + b; }, 0) / v.length, mx = Math.max.apply(null, v);
+    var c = 44, x0 = 40, y0 = 20;
+    v.forEach(function (val, i) {
+      var r = Math.floor(i / 4), col = i % 4;
+      el("rect", {x: x0 + col * c, y: y0 + r * c, width: c - 2, height: c - 2, fill: "var(--accent)", "fill-opacity": (0.15 + val * 0.8).toFixed(2)}, s);
+      el("text", {x: x0 + col * c + (c - 2) / 2, y: y0 + r * c + 26, "text-anchor": "middle", "class": "t-fg mono", "font-size": 11, "font-weight": val === mx ? 700 : 400}, s, val.toFixed(2));
+    });
+    el("text", {x: x0, y: y0 + 4 * c + 20, "class": "t-muted", "font-size": 11.5}, s, "16 pixels de la zone (un mois)");
+    arrow(s, 230, 70, 330, 55, "ln-acc"); arrow(s, 230, 130, 330, 150);
+    el("rect", {x: 340, y: 25, width: 380, height: 60, rx: 8, "class": "box-acc"}, s);
+    el("text", {x: 356, y: 50, "class": "t-fg mono", "font-size": 13}, s, "ee.Reducer.mean()  →  " + fmt(mean));
+    el("text", {x: 356, y: 70, "class": "t-muted", "font-size": 11.5}, s, "Moyenne de tous les pixels : l'état général de la zone");
+    el("rect", {x: 340, y: 120, width: 380, height: 60, rx: 8, "class": "box"}, s);
+    el("text", {x: 356, y: 145, "class": "t-fg mono", "font-size": 13}, s, "ee.Reducer.max()   →  " + fmt(mx));
+    el("text", {x: 356, y: 165, "class": "t-muted", "font-size": 11.5}, s, "Seulement le pixel le plus vert ; masque clairières et dégâts");
+  })();
+})();
+</script>
+</body>
+</html>
